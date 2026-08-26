@@ -1,6 +1,11 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
-import torch
+from transformers import (
+    AutoTokenizer,
+    AutoModelForCausalLM,
+    BitsAndBytesConfig,
+)
 
+import torch
+import json
 
 MODEL_NAME = "Qwen/Qwen3-4B-Instruct-2507"
 
@@ -11,6 +16,8 @@ bnb_config = BitsAndBytesConfig(
     bnb_4bit_use_double_quant=True,
 )
 
+print("Loading Qwen...")
+
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 model = AutoModelForCausalLM.from_pretrained(
@@ -19,34 +26,79 @@ model = AutoModelForCausalLM.from_pretrained(
     device_map="auto",
 )
 
-prompt = input("Enter your prompt: ")
+print("Qwen Ready")
 
-messages = [
-    {"role": "user","content": prompt}
-]
 
-text = tokenizer.apply_chat_template(
-    messages,
-    tokenize=False,
-    add_generation_prompt=True
-)
+def _generate(prompt: str, max_new_tokens=1024):
 
-inputs = tokenizer(text, return_tensors="pt").to(model.device)
+    messages = [
+        {
+            "role": "user",
+            "content": prompt
+        }
+    ]
 
-with torch.no_grad():
-    outputs = model.generate(
-        **inputs,
-        max_new_tokens=1024,
-        temperature=0.7,
-        do_sample=True
+    text = tokenizer.apply_chat_template(
+        messages,
+        tokenize=False,
+        add_generation_prompt=True
     )
 
-response = tokenizer.decode(
-    outputs[0][inputs.input_ids.shape[1]:],
-    skip_special_tokens=True
-)
+    inputs = tokenizer(
+        text,
+        return_tensors="pt"
+    ).to(model.device)
 
-with open("output.txt", "w", encoding="utf-8") as f:
-    f.write(response)
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=max_new_tokens,
+        do_sample=False,
+        temperature=0.1,
+        use_cache=True
+    )
 
-print("\nSaved output to output.txt")
+    return tokenizer.decode(
+        outputs[0][inputs.input_ids.shape[1]:],
+        skip_special_tokens=True
+    )
+
+
+def compress_text(raw_text: str):
+
+    prompt = f"""
+Extract ALL important information.
+
+Return ONLY valid JSON.
+
+{{
+    "summary": "",
+    "key_entities": [],
+    "statistics": [],
+    "dates": [],
+    "risks": [],
+    "recommendations": [],
+    "important_facts": []
+}}
+
+TEXT:
+
+{raw_text}
+"""
+
+    return _generate(prompt, 2048)
+
+
+def beautify_output(gemini_output: str):
+
+    prompt = f"""
+Convert the following information into a
+professional, readable response.
+
+Keep all facts.
+
+CONTENT:
+
+{gemini_output}
+"""
+
+    return _generate(prompt, 2048)

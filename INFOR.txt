@@ -13,4 +13,9 @@ using EasyOCR as it can extract all missed text details in hindi or English
 ++++++++++++++++++++++++++++++++++++++
 LOCAL LLM
 ++++++++++++++++++++++++++++++++++++++
-Using Qwen3-4B as a base model
+Using Qwen3-4B-Instruct as a base model
+
+++++++++++++++++++++++++++++++++++++++
+API
+++++++++++++++++++++++++++++++++++++++
+Using Fast Api
