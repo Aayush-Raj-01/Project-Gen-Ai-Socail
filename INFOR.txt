@@ -1,0 +1,16 @@
+++++++++++++++++++++++++++++++++++++++
+FRONTEND
++++++++++++++++++++++++++++++++++++++
+Using Next js Framework , Three js , Tailwind css ,
+
+++++++++++++++++++++++++++++++++++++++
+FOR IMAGE 
+++++++++++++++++++++++++++++++++++++++
+Using florence-2-base for image details extraction as it extracts the key details from image , so we dont miss any details 
+
+using EasyOCR as it can extract all missed text details in hindi or English
+
+++++++++++++++++++++++++++++++++++++++
+LOCAL LLM
+++++++++++++++++++++++++++++++++++++++
+Using Qwen3-4B as a base model

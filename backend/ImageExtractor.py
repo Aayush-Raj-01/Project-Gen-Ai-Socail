@@ -2,7 +2,6 @@ from PIL import Image
 import torch
 import os
 import easyocr
-
 from transformers import AutoProcessor, Florence2ForConditionalGeneration
 
 # ==================================================
