@@ -1,0 +1,4 @@
+torch==2.8.0
+Pillow==11.3.0
+pip install --no-cache-dir transformers
+easyocr
