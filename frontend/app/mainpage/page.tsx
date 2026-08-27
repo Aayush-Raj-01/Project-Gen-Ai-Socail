@@ -77,13 +77,16 @@ export default function MainPage() {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkValue, setLinkValue] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<
-    { name: string; type: string }[]
+    { name: string; type: string; file: File }[]
   >([]);
   const [isRecording, setIsRecording] = useState(false);
   const [openSelector, setOpenSelector] = useState<SelectorKey | null>(null);
   const [selections, setSelections] = useState<
     Partial<Record<SelectorKey, string>>
   >({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [response, setResponse] = useState<Record<string, unknown> | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // File input refs
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -98,6 +101,7 @@ export default function MainPage() {
         const newFiles = Array.from(files).map((f) => ({
           name: f.name,
           type,
+          file: f,
         }));
         setAttachedFiles((prev) => [...prev, ...newFiles]);
       }
@@ -126,6 +130,41 @@ export default function MainPage() {
   const toggleRecording = useCallback(() => {
     setIsRecording((prev) => !prev);
   }, []);
+
+  const handleSubmit = useCallback(async () => {
+    // Find the first image file to send
+    const imageFile = attachedFiles.find((f) => f.type === "image");
+    if (!imageFile) {
+      setError("Please attach an image file to analyze.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setResponse(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", imageFile.file);
+
+      const res = await fetch("http://localhost:8000/analyze-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.detail || `Server error: ${res.status}`);
+      }
+
+      const data = await res.json();
+      setResponse(data);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [attachedFiles]);
 
   return (
     <div className="mainpage-root">
@@ -953,10 +992,11 @@ export default function MainPage() {
 
             <button
               className="mp-submit-btn"
-              disabled={!prompt.trim() && attachedFiles.length === 0}
+              disabled={isLoading || (attachedFiles.length === 0)}
               title="Generate"
+              onClick={handleSubmit}
             >
-              ➜
+              {isLoading ? "⏳" : "➜"}
             </button>
           </div>
         </div>
@@ -1015,6 +1055,101 @@ export default function MainPage() {
             );
           })}
         </div>
+
+        {/* ── Error Message ── */}
+        {error && (
+          <div style={{
+            marginTop: 20,
+            padding: "14px 20px",
+            borderRadius: 12,
+            background: "rgba(255, 80, 80, 0.1)",
+            border: "1px solid rgba(255, 80, 80, 0.2)",
+            color: "#ff8a8a",
+            fontSize: 13,
+            width: "100%",
+          }}>
+            ⚠️ {error}
+          </div>
+        )}
+
+        {/* ── Loading Indicator ── */}
+        {isLoading && (
+          <div style={{
+            marginTop: 24,
+            textAlign: "center",
+            color: "rgba(0, 200, 150, 0.7)",
+            fontSize: 14,
+          }}>
+            <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>⏳</span>
+            {" "}Processing image through pipeline...
+            <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+          </div>
+        )}
+
+        {/* ── Response Display ── */}
+        {response && (
+          <div style={{
+            marginTop: 24,
+            width: "100%",
+            background: "rgba(10, 20, 18, 0.85)",
+            border: "1px solid rgba(0, 200, 150, 0.12)",
+            borderRadius: 16,
+            padding: 24,
+            backdropFilter: "blur(40px)",
+          }}>
+            <h3 style={{
+              fontSize: 16,
+              fontWeight: 600,
+              color: "#00c896",
+              marginBottom: 16,
+            }}>Pipeline Result</h3>
+
+            {/* Final Output */}
+            {response.final_output && (
+              <div style={{ marginBottom: 20 }}>
+                <h4 style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>Final Output</h4>
+                <div style={{ fontSize: 14, lineHeight: 1.7, color: "#d4e8e2", whiteSpace: "pre-wrap" }}>
+                  {String(response.final_output)}
+                </div>
+              </div>
+            )}
+
+            {/* Image Analysis */}
+            {response.image_analysis && (
+              <div style={{ marginBottom: 20 }}>
+                <h4 style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>Image Analysis</h4>
+                <p style={{ fontSize: 13, color: "#a0d4c4", lineHeight: 1.6 }}>
+                  {String((response.image_analysis as Record<string, unknown>).image_description || "")}
+                </p>
+                {(response.image_analysis as Record<string, unknown>).ocr_text && (
+                  <p style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 8 }}>
+                    <strong>OCR:</strong> {String((response.image_analysis as Record<string, unknown>).ocr_text)}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Gemini Output */}
+            {response.gemini_output && (
+              <details style={{ marginBottom: 12 }}>
+                <summary style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", cursor: "pointer", textTransform: "uppercase", letterSpacing: 1.5 }}>Gemini Raw Output</summary>
+                <div style={{ fontSize: 13, color: "#7dd4b8", marginTop: 8, whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
+                  {String(response.gemini_output)}
+                </div>
+              </details>
+            )}
+
+            {/* Compressed Data */}
+            {response.compressed_data && (
+              <details>
+                <summary style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", cursor: "pointer", textTransform: "uppercase", letterSpacing: 1.5 }}>Compressed Data (JSON)</summary>
+                <pre style={{ fontSize: 11, color: "#7dd4b8", marginTop: 8, overflow: "auto", maxHeight: 300, background: "rgba(0,0,0,0.3)", padding: 12, borderRadius: 8 }}>
+                  {JSON.stringify(response.compressed_data, null, 2)}
+                </pre>
+              </details>
+            )}
+          </div>
+        )}
       </main>
     </div>
   );

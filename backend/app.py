@@ -1,61 +1,98 @@
-from fastapi import FastAPI, UploadFile, File
-import shutil
+"""
+FastAPI Application
+===================
+
+Exposes the content transformation pipeline as REST endpoints.
+
+Endpoints:
+    GET  /               —  Health check.
+    POST /analyze-image  —  Upload image → full pipeline → JSON response.
+"""
+
 import os
+import shutil
+import uuid
 
-from image_analyzer import analyze_image
-from llm import generate_response
-from pydantic import BaseModel
+from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
-class GenerateRequest(BaseModel):
-    user_input: str
-app = FastAPI()
+from workflow import process_image
 
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+# ---------------------------------------------------------------------------
+# App setup
+# ---------------------------------------------------------------------------
+
+app = FastAPI(
+    title="Project Gen AI Social",
+    description="AI-powered content transformation platform",
+    version="2.0.0",
+)
+
+# CORS — allow all origins for development
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ---------------------------------------------------------------------------
+# Upload directory
+# ---------------------------------------------------------------------------
+
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Ensure upload directory exists when server starts."""
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    print(f"[app] Upload directory ready: {UPLOAD_DIR}")
+
+
+# ---------------------------------------------------------------------------
+# Endpoints
+# ---------------------------------------------------------------------------
+
+@app.get("/")
+async def health_check():
+    """Health check endpoint."""
+    return {"status": "running"}
 
 
 @app.post("/analyze-image")
-async def analyze(file: UploadFile = File(...)):
+async def analyze_uploaded_image(
+    file: UploadFile = File(...),
+):
+    """
+    Upload an image and run the full transformation pipeline.
 
-    file_path = os.path.join(
-        UPLOAD_DIR,
-        file.filename
-    )
+    Pipeline:
+        Image → Florence+OCR → Qwen Compression → Gemini → Qwen Beautification
 
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    Returns the complete JSON response with all intermediate and final outputs.
+    """
+    try:
+        # Generate unique filename to avoid collisions
+        ext = os.path.splitext(file.filename)[1] if file.filename else ".png"
+        unique_name = f"{uuid.uuid4().hex}{ext}"
+        file_path = os.path.join(UPLOAD_DIR, unique_name)
 
-    image_data = analyze_image(file_path)
+        # Save uploaded file
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
 
-    llm_prompt = f"""
-Analyze this image information.
+        print(f"[app] Image saved: {file_path}")
 
-IMAGE DESCRIPTION:
-{image_data['description']}
+        # Run full pipeline
+        result = process_image(file_path)
 
-OCR TEXT:
-{image_data['ocr_text']}
+        return result
 
-Generate:
-1. Executive Summary
-2. Key Insights
-3. Risks
-4. Recommendations
-"""
-
-    llm_response = generate_response(llm_prompt)
-
-    return {
-        "description": image_data["description"],
-        "ocr_text": image_data["ocr_text"],
-        "llm_output": llm_response
-    }
-
-@app.post("/generate")
-async def generate(request: GenerateRequest):
-
-    result = process_document(
-        user_input
-    )
-
-    return result
+    except Exception as e:
+        print(f"[app] ERROR: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=str(e),
+        )
