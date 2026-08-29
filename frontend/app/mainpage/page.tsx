@@ -414,30 +414,10 @@ export default function MainPage() {
         {/* Soft Radial Glow for depth behind Hero Section */}
         <div className="mp-hero-radial-glow" />
 
-        <motion.div
-          className="mp-hero-badge"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          whileHover={{ scale: 1.05, y: -2 }}
-        >
-          <motion.span
-            animate={{ rotate: [0, 15, -15, 0], scale: [1, 1.2, 1] }}
-            transition={{ repeat: Infinity, duration: 2.8, ease: "easeInOut" }}
-            style={{ display: "inline-block" }}
-          >
-            ✨
-          </motion.span>{" "}
-          Multimodal AI Social Studio • v2.0
-        </motion.div>
-
         <h1 className="mp-title">
           Craft your content with a touch of{" "}
           <span className="mp-title-highlight">intelligence</span>
         </h1>
-        <p className="mp-subtitle">
-          Generate high-converting, multimodal social content tailored to your audience & goals
-        </p>
 
         {/* ── Prompt Card ── */}
         <div className="mp-prompt-card">
