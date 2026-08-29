@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>GenAI Social Studio</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface": "#dbe5e0",
+                        "on-surface-variant": "#b9cac4",
+                        "secondary-container": "#0b5345",
+                        "on-secondary-fixed-variant": "#065043",
+                        "on-primary-container": "#007260",
+                        "tertiary-container": "#fee24a",
+                        "on-primary": "#00382e",
+                        "primary-fixed-dim": "#00dfbe",
+                        "surface-container-high": "#232c29",
+                        "inverse-primary": "#006b5a",
+                        "primary": "#ffffff",
+                        "on-secondary-container": "#86c5b3",
+                        "on-error": "#690005",
+                        "on-error-container": "#ffdad6",
+                        "surface-tint": "#00dfbe",
+                        "on-secondary-fixed": "#00201a",
+                        "surface-variant": "#2e3734",
+                        "outline": "#83948e",
+                        "on-primary-fixed-variant": "#005143",
+                        "background": "#0c1513",
+                        "surface-bright": "#323b38",
+                        "tertiary": "#ffffff",
+                        "on-primary-fixed": "#00201a",
+                        "on-tertiary-container": "#736400",
+                        "on-tertiary": "#393000",
+                        "secondary-fixed-dim": "#94d3c1",
+                        "inverse-surface": "#dbe5e0",
+                        "primary-container": "#0affd9",
+                        "surface-container-lowest": "#07100d",
+                        "surface": "#0c1513",
+                        "on-background": "#dbe5e0",
+                        "secondary-fixed": "#afefdd",
+                        "secondary": "#94d3c1",
+                        "tertiary-fixed": "#fee24a",
+                        "error-container": "#93000a",
+                        "outline-variant": "#3a4a45",
+                        "on-tertiary-fixed": "#211b00",
+                        "inverse-on-surface": "#29322f",
+                        "error": "#ffb4ab",
+                        "surface-container-low": "#151d1b",
+                        "surface-container": "#19211f",
+                        "on-tertiary-fixed-variant": "#524700",
+                        "primary-fixed": "#0affd9",
+                        "on-secondary": "#00382e",
+                        "surface-container-highest": "#2e3734",
+                        "tertiary-fixed-dim": "#e1c62d",
+                        "surface-dim": "#0c1513"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max": "1280px",
+                        "margin-desktop": "64px",
+                        "base": "8px",
+                        "gutter": "24px",
+                        "margin-mobile": "20px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Geist", "sans-serif"],
+                        "headline-lg": ["Geist", "sans-serif"],
+                        "body-sm": ["Inter", "sans-serif"],
+                        "label-md": ["Geist", "sans-serif"],
+                        "headline-lg-mobile": ["Geist", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glow-overlay {
+            background: radial-gradient(circle at 50% 0%, rgba(0, 223, 190, 0.08) 0%, transparent 70%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col font-body-md overflow-x-hidden relative">
+<!-- Ambient Background Lighting -->
+<div class="fixed top-0 inset-x-0 h-[500px] pointer-events-none z-0 opacity-40">
+<div class="absolute inset-0 bg-gradient-to-b from-primary-fixed-dim/10 to-transparent blur-3xl"></div>
+</div>
+<!-- TopNavBar Shared Component -->
+<header class="bg-background dark:bg-background border-b border-outline-variant/30 sticky top-0 z-40">
+<div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4 w-full max-w-[container-max] mx-auto">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-fixed-dim icon-filled text-3xl" data-icon="temp_preferences_custom">temp_preferences_custom</span>
+<span class="font-display-lg text-headline-lg-mobile md:text-headline-lg text-primary dark:text-primary tracking-tight">GenAI Social Studio</span>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-on-surface-variant hover:text-primary-fixed-dim transition-colors duration-200 flex flex-col items-center group">
+<span class="material-symbols-outlined group-active:opacity-80 group-active:scale-95 transition-all" data-icon="history">history</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary-fixed-dim transition-colors duration-200 flex flex-col items-center group">
+<span class="material-symbols-outlined group-active:opacity-80 group-active:scale-95 transition-all" data-icon="settings">settings</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Studio Canvas -->
+<main class="flex-grow flex flex-col items-center pt-16 md:pt-24 pb-48 px-margin-mobile md:px-margin-desktop w-full max-w-[container-max] mx-auto relative z-10">
+<!-- Hero Section -->
+<div class="text-center max-w-3xl mb-12">
+<h1 class="font-display-lg text-headline-lg md:text-display-lg text-primary tracking-tight mb-4 drop-shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                Craft your content with a touch of intelligence
+            </h1>
+<p class="font-body-md text-body-md md:text-lg text-on-surface-variant max-w-xl mx-auto leading-relaxed">
+                Generate AI-powered social content tailored to your audience. Provide a prompt or attach assets to begin.
+            </p>
+</div>
+<!-- Main Prompt Card (Glassmorphic) -->
+<div class="w-full max-w-4xl bg-surface-container/60 backdrop-blur-md border border-outline-variant/40 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col transition-all duration-300 focus-within:border-primary-fixed-dim/40 focus-within:shadow-[0_0_40px_rgba(0,223,190,0.1)] group">
+<!-- Inner top glow -->
+<div class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary-fixed-dim/30 to-transparent"></div>
+<!-- Text Input Area -->
+<div class="p-6 md:p-8 flex-grow">
+<textarea class="w-full h-32 md:h-40 bg-transparent resize-none border-none focus:ring-0 font-body-md text-lg text-on-surface placeholder:text-on-surface-variant/40 leading-relaxed outline-none" placeholder="Describe what you want to create..."></textarea>
+</div>
+<!-- Attached Files Area -->
+<div class="px-6 md:px-8 pb-4 flex flex-wrap gap-2 empty:hidden">
+<div class="inline-flex items-center gap-2 bg-surface-variant/50 border border-outline-variant/30 rounded-lg px-3 py-1.5 font-body-sm text-body-sm text-on-surface hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[18px] text-secondary-fixed-dim" data-icon="description">description</span>
+<span>Q3_Brand_Guidelines.pdf</span>
+<button class="ml-1 text-on-surface-variant hover:text-error transition-colors">
+<span class="material-symbols-outlined text-[16px]" data-icon="close">close</span>
+</button>
+</div>
+</div>
+<!-- Intent/Generation Types Section -->
+<div class="bg-surface-container-high/40 border-t border-outline-variant/20 p-6 md:p-8">
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-4">What do you want to generate?</p>
+<div class="flex flex-wrap gap-3">
+<button class="px-4 py-2 rounded-full border border-outline-variant/50 bg-transparent text-on-surface font-body-sm text-body-sm hover:border-primary-fixed-dim/50 hover:bg-primary-fixed-dim/5 transition-all duration-200">
+                        Video Package
+                    </button>
+<button class="px-4 py-2 rounded-full border border-primary-fixed-dim bg-primary-fixed-dim/10 text-primary-fixed-dim font-body-sm text-body-sm hover:bg-primary-fixed-dim/20 transition-all duration-200 shadow-[0_0_15px_rgba(0,223,190,0.15)]">
+                        LinkedIn Post
+                    </button>
+<button class="px-4 py-2 rounded-full border border-outline-variant/50 bg-transparent text-on-surface font-body-sm text-body-sm hover:border-primary-fixed-dim/50 hover:bg-primary-fixed-dim/5 transition-all duration-200">
+                        Twitter/X Post
+                    </button>
+<button class="px-4 py-2 rounded-full border border-outline-variant/50 bg-transparent text-on-surface font-body-sm text-body-sm hover:border-primary-fixed-dim/50 hover:bg-primary-fixed-dim/5 transition-all duration-200">
+                        Advisory
+                    </button>
+<button class="px-4 py-2 rounded-full border border-outline-variant/50 bg-transparent text-on-surface font-body-sm text-body-sm hover:border-primary-fixed-dim/50 hover:bg-primary-fixed-dim/5 transition-all duration-200">
+                        Infographic
+                    </button>
+<button class="px-4 py-2 rounded-full border border-outline-variant/50 bg-transparent text-on-surface font-body-sm text-body-sm hover:border-primary-fixed-dim/50 hover:bg-primary-fixed-dim/5 transition-all duration-200">
+                        Executive Summary
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar Shared Component -->
+<!-- Modified to act as the primary generation toolbar matching the prompt's structural requirement while keeping JSON styling -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-between items-center px-4 md:px-margin-desktop py-4 bg-surface-container-high/90 dark:bg-surface-container-high/90 backdrop-blur-xl border-t border-outline-variant/20 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] pb-safe">
+<!-- Left: Attachment Types -->
+<div class="flex items-center gap-1 md:gap-4 overflow-x-auto no-scrollbar mask-image-linear-right">
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary-fixed-dim hover:bg-surface-variant/50 p-2 md:px-4 md:py-2 rounded-lg transition-all duration-200 group">
+<span class="material-symbols-outlined text-[24px] mb-1 group-hover:scale-110 transition-transform" data-icon="image">image</span>
+<span class="font-label-md text-[10px] md:text-label-md hidden md:block">Image</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary-fixed-dim hover:bg-surface-variant/50 p-2 md:px-4 md:py-2 rounded-lg transition-all duration-200 group">
+<span class="material-symbols-outlined text-[24px] mb-1 group-hover:scale-110 transition-transform" data-icon="description">description</span>
+<span class="font-label-md text-[10px] md:text-label-md hidden md:block">PDF</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary-fixed-dim hover:bg-surface-variant/50 p-2 md:px-4 md:py-2 rounded-lg transition-all duration-200 group">
+<span class="material-symbols-outlined text-[24px] mb-1 group-hover:scale-110 transition-transform" data-icon="videocam">videocam</span>
+<span class="font-label-md text-[10px] md:text-label-md hidden md:block">Video</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary-fixed-dim hover:bg-surface-variant/50 p-2 md:px-4 md:py-2 rounded-lg transition-all duration-200 group">
+<span class="material-symbols-outlined text-[24px] mb-1 group-hover:scale-110 transition-transform" data-icon="link">link</span>
+<span class="font-label-md text-[10px] md:text-label-md hidden md:block">Link</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary-fixed-dim hover:bg-surface-variant/50 p-2 md:px-4 md:py-2 rounded-lg transition-all duration-200 group">
+<span class="material-symbols-outlined text-[24px] mb-1 group-hover:scale-110 transition-transform" data-icon="mic">mic</span>
+<span class="font-label-md text-[10px] md:text-label-md hidden md:block">Audio</span>
+</button>
+</div>
+<!-- Right: Primary Action -->
+<div class="ml-4 flex-shrink-0">
+<button class="flex items-center justify-center gap-2 bg-primary-fixed-dim text-on-primary font-label-md text-label-md px-6 py-3 rounded-full hover:brightness-110 hover:shadow-[0_0_20px_rgba(0,223,190,0.4)] active:scale-95 transition-all duration-200 group">
+<span class="tracking-wide">Generate</span>
+<span class="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</nav>
+</body></html>
