@@ -585,14 +585,14 @@
   padding: 6px 14px 6px 7px;
   border-radius: 10px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 650;
   background: #030607;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #b0c2c0;
+  color: #64807e;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  letter-spacing: 0.1px;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.2px;
 }
 
 .mp-quick-icon-badge {
@@ -625,7 +625,7 @@
 }
 
 .mp-quick-chip:hover {
-  color: #ffffff;
+  color: #39b49a;
   background: #000000;
   border-color: rgba(57, 180, 154, 0.45);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(57, 180, 154, 0.2);
@@ -648,16 +648,16 @@
   padding: 6px 14px 6px 7px;
   border-radius: 10px;
   font-size: 12.5px;
-  font-weight: 600;
+  font-weight: 650;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: #030607;
-  color: #b0c2c0;
+  color: #64807e;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
   position: relative;
   user-select: none;
-  letter-spacing: 0.1px;
+  letter-spacing: 0.2px;
 }
 
 .mp-selector-icon-badge {
@@ -699,7 +699,7 @@
 
 .mp-selector-trigger:hover {
   border-color: rgba(57, 180, 154, 0.4);
-  color: #ffffff;
+  color: #39b49a;
   background: #000000;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8);
 }
