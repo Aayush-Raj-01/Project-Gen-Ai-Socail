@@ -78,27 +78,84 @@ const SELECTOR_DATA = {
 
 type SelectorKey = keyof typeof SELECTOR_DATA;
 
-export default function MainPage() {
-  // ── 3D Plexus Background Canvas ──
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+interface ProjectedPoint {
+  x: number;
+  y: number;
+  scale: number;
+  z: number;
+}
+
+class Particle3D {
+  x: number = 0;
+  y: number = 0;
+  z: number = 0;
+  vx: number = 0;
+  vy: number = 0;
+  vz: number = 0;
+  baseColor: string = "";
+
+  constructor(width: number, height: number) {
+    this.reset(width, height);
+  }
+
+  reset(width: number, height: number): void {
+    this.x = (Math.random() - 0.5) * width * 1.2;
+    this.y = (Math.random() - 0.5) * height * 1.2;
+    this.z = (Math.random() - 0.5) * 600;
+    this.vx = (Math.random() - 0.5) * 0.4;
+    this.vy = (Math.random() - 0.5) * 0.4;
+    this.vz = (Math.random() - 0.5) * 0.4;
+    this.baseColor = Math.random() > 0.4 ? "0, 242, 254" : "176, 87, 254";
+  }
+
+  update(width: number, height: number): void {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.z += this.vz;
+
+    const boundX = (width * 1.2) / 2;
+    const boundY = (height * 1.2) / 2;
+    const boundZ = 300;
+
+    if (Math.abs(this.x) > boundX) this.vx *= -1;
+    if (Math.abs(this.y) > boundY) this.vy *= -1;
+    if (Math.abs(this.z) > boundZ) this.vz *= -1;
+  }
+
+  project(rotX: number, rotY: number, width: number, height: number, fov: number): ProjectedPoint {
+    const cosY = Math.cos(rotY);
+    const sinY = Math.sin(rotY);
+    const x1 = this.x * cosY - this.z * sinY;
+    const z1 = this.z * cosY + this.x * sinY;
+
+    const cosX = Math.cos(rotX);
+    const sinX = Math.sin(rotX);
+    const y1 = this.y * cosX - z1 * sinX;
+    const z2 = z1 * cosX + this.y * sinX;
+
+    const scale = fov / (fov + z2 + 400);
+
+    return {
+      x: x1 * scale + width / 2,
+      y: y1 * scale + height / 2,
+      scale,
+      z: z2,
+    };
+  }
+}
+
+export const PlexusHero: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let animId: number;
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
-
-    const handleResize = () => {
-      if (!canvas) return;
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-    };
-
-    window.addEventListener("resize", handleResize);
 
     const PARTICLE_COUNT = 85;
     const MAX_DISTANCE = 170;
@@ -110,93 +167,40 @@ export default function MainPage() {
     let targetRotationY = 0;
     let rotationX = 0;
     let rotationY = 0;
+    let animationFrameId: number;
+
+    const handleResize = () => {
+      if (!canvas) return;
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
 
     const handleMouseMove = (e: MouseEvent) => {
       mouseX = (e.clientX - width / 2) * 0.0005;
       mouseY = (e.clientY - height / 2) * 0.0005;
     };
 
+    window.addEventListener("resize", handleResize);
     window.addEventListener("mousemove", handleMouseMove);
 
-    class Particle3D {
-      x = 0;
-      y = 0;
-      z = 0;
-      vx = 0;
-      vy = 0;
-      vz = 0;
-      baseColor = "0, 242, 254";
-
-      constructor() {
-        this.reset();
-      }
-
-      reset() {
-        this.x = (Math.random() - 0.5) * width * 1.2;
-        this.y = (Math.random() - 0.5) * height * 1.2;
-        this.z = (Math.random() - 0.5) * 600;
-        this.vx = (Math.random() - 0.5) * 0.4;
-        this.vy = (Math.random() - 0.5) * 0.4;
-        this.vz = (Math.random() - 0.5) * 0.4;
-        this.baseColor = Math.random() > 0.4 ? "0, 242, 254" : "176, 87, 254";
-      }
-
-      update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        this.z += this.vz;
-
-        const boundX = (width * 1.2) / 2;
-        const boundY = (height * 1.2) / 2;
-        const boundZ = 300;
-
-        if (Math.abs(this.x) > boundX) this.vx *= -1;
-        if (Math.abs(this.y) > boundY) this.vy *= -1;
-        if (Math.abs(this.z) > boundZ) this.vz *= -1;
-      }
-
-      project(rotX: number, rotY: number) {
-        // Rotate Y
-        const cosY = Math.cos(rotY);
-        const sinY = Math.sin(rotY);
-        const x1 = this.x * cosY - this.z * sinY;
-        const z1 = this.z * cosY + this.x * sinY;
-
-        // Rotate X
-        const cosX = Math.cos(rotX);
-        const sinX = Math.sin(rotX);
-        const y1 = this.y * cosX - z1 * sinX;
-        const z2 = z1 * cosX + this.y * sinX;
-
-        // Perspective Projection
-        const scale = FOV / (FOV + z2 + 400);
-        return {
-          x: x1 * scale + width / 2,
-          y: y1 * scale + height / 2,
-          scale: scale,
-          z: z2,
-        };
-      }
-    }
-
-    const particles = Array.from({ length: PARTICLE_COUNT }, () => new Particle3D());
+    const particles: Particle3D[] = Array.from(
+      { length: PARTICLE_COUNT },
+      () => new Particle3D(width, height)
+    );
 
     const animate = () => {
       ctx.clearRect(0, 0, width, height);
 
-      // Smooth mouse rotation
       targetRotationY += (mouseX - targetRotationY) * 0.05;
       targetRotationX += (mouseY - targetRotationX) * 0.05;
       rotationY += 0.001 + targetRotationY * 0.1;
       rotationX += targetRotationX * 0.1;
 
-      // Update positions
-      particles.forEach((p) => p.update());
+      particles.forEach((p) => p.update(width, height));
 
-      // Project 3D to 2D
       const projected = particles.map((p) => ({
         data: p,
-        proj: p.project(rotationX, rotationY),
+        proj: p.project(rotationX, rotationY, width, height, FOV),
       }));
 
       // Draw Connection Lines
@@ -235,7 +239,7 @@ export default function MainPage() {
         }
       });
 
-      animId = requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
     };
 
     animate();
@@ -243,10 +247,20 @@ export default function MainPage() {
     return () => {
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("mousemove", handleMouseMove);
-      cancelAnimationFrame(animId);
+      cancelAnimationFrame(animationFrameId);
     };
   }, []);
 
+  return (
+    <canvas
+      ref={canvasRef}
+      id="plexus-canvas"
+      className="mp-plexus-canvas"
+    />
+  );
+};
+
+export default function MainPage() {
   // ── State ──
   const [prompt, setPrompt] = useState(() => {
     if (typeof window !== "undefined") {
@@ -540,7 +554,7 @@ export default function MainPage() {
       )}
 
       {/* ── Fixed 3D Plexus Background Canvas ── */}
-      <canvas id="plexus-canvas" ref={canvasRef} className="mp-plexus-canvas" />
+      <PlexusHero />
 
       {/* ── Animated Mesh / Aurora Gradient Background ── */}
       <div className="mp-aurora-container" aria-hidden="true">
