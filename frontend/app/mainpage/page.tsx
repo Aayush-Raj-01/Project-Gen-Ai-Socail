@@ -371,6 +371,15 @@ export default function MainPage() {
         </>
       )}
 
+      {/* ── Animated Mesh / Aurora Gradient Background ── */}
+      <div className="mp-aurora-container" aria-hidden="true">
+        <div className="mp-aurora-blob blob-1" />
+        <div className="mp-aurora-blob blob-2" />
+        <div className="mp-aurora-blob blob-3" />
+        <div className="mp-aurora-blob blob-4" />
+        <div className="mp-aurora-overlay" />
+      </div>
+
       {/* ── Header ── */}
       <header className="mp-header">
         <Link href="/" className="mp-logo-wrap">
