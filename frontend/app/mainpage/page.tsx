@@ -190,11 +190,17 @@ export default function MainPage() {
   }, []);
 
   const handleSubmit = useCallback(async () => {
+    // Find the first file to send (prioritize image, then video, audio, pdf)
     const imageFile = attachedFiles.find((f) => f.type === "image");
+    const videoFile = attachedFiles.find((f) => f.type === "video");
+    const audioFile = attachedFiles.find((f) => f.type === "audio");
+    const pdfFile = attachedFiles.find((f) => f.type === "pdf");
     const hasPrompt = prompt.trim().length > 0;
 
-    if (!imageFile && !hasPrompt) {
-      setError("Please enter a prompt or attach an image.");
+    const fileToSend = imageFile || videoFile || audioFile || pdfFile;
+
+    if (!fileToSend && !hasPrompt) {
+      setError("Please enter a prompt or attach a file.");
       return;
     }
 
@@ -206,12 +212,17 @@ export default function MainPage() {
     try {
       let res: Response;
 
-      if (imageFile) {
-        // Image pipeline — send to /analyze-image
+      if (fileToSend) {
+        // File pipeline — send to respective endpoint based on file type
         const formData = new FormData();
-        formData.append("file", imageFile.file);
+        formData.append("file", fileToSend.file);
 
-        res = await fetch("http://localhost:8000/analyze-image", {
+        let endpoint = "http://localhost:8000/analyze-image";
+        if (fileToSend.type === "video") endpoint = "http://localhost:8000/analyze-video";
+        if (fileToSend.type === "audio") endpoint = "http://localhost:8000/analyze-audio";
+        if (fileToSend.type === "pdf") endpoint = "http://localhost:8000/analyze-pdf";
+
+        res = await fetch(endpoint, {
           method: "POST",
           body: formData,
         });
@@ -1331,6 +1342,46 @@ export default function MainPage() {
                 )}
               </div>
             )}
+
+            {/* Video Analysis */}
+            {!!response.video_analysis && (
+              <div style={{ marginBottom: 20 }}>
+                <h4 style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>Video Analysis</h4>
+                <p style={{ fontSize: 13, color: "#a0d4c4", lineHeight: 1.6 }}>
+                  <strong>Language:</strong> {String((response.video_analysis as Record<string, unknown>).language || "unknown")}
+                </p>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 8, maxHeight: 150, overflow: "auto", background: "rgba(0,0,0,0.2)", padding: 8, borderRadius: 6 }}>
+                  <strong>Transcription:</strong> {String((response.video_analysis as Record<string, unknown>).transcription || "None")}
+                </div>
+              </div>
+            )}
+
+            {/* Audio Analysis */}
+            {!!response.audio_analysis && (
+              <div style={{ marginBottom: 20 }}>
+                <h4 style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>Audio Analysis</h4>
+                <p style={{ fontSize: 13, color: "#a0d4c4", lineHeight: 1.6 }}>
+                  <strong>Language:</strong> {String((response.audio_analysis as Record<string, unknown>).language || "unknown")}
+                </p>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 8, maxHeight: 150, overflow: "auto", background: "rgba(0,0,0,0.2)", padding: 8, borderRadius: 6 }}>
+                  <strong>Transcription:</strong> {String((response.audio_analysis as Record<string, unknown>).transcription || "None")}
+                </div>
+              </div>
+            )}
+
+            {/* PDF Analysis */}
+            {!!response.pdf_analysis && (
+              <div style={{ marginBottom: 20 }}>
+                <h4 style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>PDF Analysis</h4>
+                <p style={{ fontSize: 13, color: "#a0d4c4", lineHeight: 1.6 }}>
+                  <strong>Pages:</strong> {String((response.pdf_analysis as Record<string, unknown>).page_count || 0)} | <strong>Method:</strong> {String((response.pdf_analysis as Record<string, unknown>).method || "unknown")}
+                </p>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 8, maxHeight: 150, overflow: "auto", background: "rgba(0,0,0,0.2)", padding: 8, borderRadius: 6 }}>
+                  <strong>Extracted Text:</strong> {String((response.pdf_analysis as Record<string, unknown>).extracted_text || "None")}
+                </div>
+              </div>
+            )}
+
 
             {/* Gemini Output */}
 <<<<<<< HEAD
