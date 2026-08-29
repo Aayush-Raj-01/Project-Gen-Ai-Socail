@@ -22,10 +22,52 @@ Designed for future extension to PDF, audio, and video inputs.
 """
 
 import json
+import os
+from datetime import datetime
 
 from image_analyzer import analyze_image
-from llm import compress_to_json, beautify_output
+from llm import compress_to_json, beautify_output, moderate_content
 from gemini_service import generate_from_compressed_json
+from load_models import unload_florence_model, unload_ocr_reader
+
+
+class ContentViolationError(Exception):
+    """Raised when user content is flagged by the moderation system."""
+    def __init__(self, reason: str):
+        self.reason = reason
+        super().__init__(reason)
+
+
+# ---------------------------------------------------------------------------
+# Output log file  —  stores every pipeline result for inspection
+# ---------------------------------------------------------------------------
+
+OUTPUT_LOG_FILE = os.path.join(os.path.dirname(__file__), "output_log.json")
+
+
+def _save_output_to_file(image_path: str, response: dict):
+    """Append the pipeline result to a JSON log file."""
+    entry = {
+        "timestamp": datetime.now().isoformat(),
+        "image_path": image_path,
+        "result": response,
+    }
+
+    # Load existing entries (or start fresh)
+    existing = []
+    if os.path.exists(OUTPUT_LOG_FILE):
+        try:
+            with open(OUTPUT_LOG_FILE, "r", encoding="utf-8") as f:
+                existing = json.load(f)
+        except (json.JSONDecodeError, IOError):
+            existing = []
+
+    existing.append(entry)
+
+    with open(OUTPUT_LOG_FILE, "w", encoding="utf-8") as f:
+        json.dump(existing, f, indent=2, ensure_ascii=False)
+
+    print(f"[workflow] Output saved to: {OUTPUT_LOG_FILE}")
 
 
 # ---------------------------------------------------------------------------
@@ -109,6 +151,10 @@ def process_image(image_path: str) -> dict:
     print("[workflow] Step 1/4 — Image analysis ...")
     image_data = analyze_image(image_path)
 
+    # Free VRAM — Florence-2 and EasyOCR are no longer needed for this request
+    unload_florence_model()
+    unload_ocr_reader()
+
     # Build combined text for compression
     combined_text = f"""IMAGE DESCRIPTION:
 {image_data['image_description']}
@@ -118,6 +164,15 @@ TEXT DETECTED IN IMAGE:
 
 DETECTED OBJECTS:
 {', '.join(image_data['detected_objects']) if image_data['detected_objects'] else 'None'}"""
+
+    # ------------------------------------------------------------------
+    # Moderation gate — check extracted text before processing
+    # ------------------------------------------------------------------
+    moderation_text = f"{image_data.get('ocr_text', '')} {image_data.get('image_description', '')}"
+    moderation = moderate_content(moderation_text)
+    if not moderation["safe"]:
+        print(f"[workflow] BLOCKED: {moderation['reason']}")
+        raise ContentViolationError(moderation["reason"])
 
     # ------------------------------------------------------------------
     # Step 2: Qwen Compression → Structured JSON
@@ -155,6 +210,76 @@ DETECTED OBJECTS:
         "gemini_output": gemini_output,
         "final_output": final_output,
     }
+
+    # Save output to file for inspection
+    _save_output_to_file(image_path, response)
+
+    print("[workflow] === Pipeline complete ===")
+
+    return response
+
+
+def process_prompt(prompt_text: str) -> dict:
+    """
+    Pipeline for text-only content transformation (no image).
+
+    Steps:
+        1. Compress        →  structured JSON via Qwen.
+        2. Generate        →  concise output via Gemini.
+        3. Beautify        →  polished text via Qwen.
+
+    Args:
+        prompt_text: The user's text prompt.
+
+    Returns:
+        Complete response dict with all intermediate and final outputs.
+    """
+    print(f"[workflow] === Starting text-only pipeline ===")
+
+    # ------------------------------------------------------------------
+    # Moderation gate — check prompt before processing
+    # ------------------------------------------------------------------
+    moderation = moderate_content(prompt_text)
+    if not moderation["safe"]:
+        print(f"[workflow] BLOCKED: {moderation['reason']}")
+        raise ContentViolationError(moderation["reason"])
+
+    # ------------------------------------------------------------------
+    # Step 1: Qwen Compression → Structured JSON
+    # ------------------------------------------------------------------
+    print("[workflow] Step 1/3 — Qwen compression ...")
+    compressed_raw = compress_to_json(
+        raw_text=prompt_text,
+        image_context="N/A — text-only prompt",
+    )
+
+    compressed_data = _safe_parse_json(compressed_raw)
+
+    # ------------------------------------------------------------------
+    # Step 2: Gemini Generation
+    # ------------------------------------------------------------------
+    print("[workflow] Step 2/3 — Gemini generation ...")
+    compressed_json_str = json.dumps(compressed_data, ensure_ascii=False)
+    gemini_output = generate_from_compressed_json(compressed_json_str)
+
+    # ------------------------------------------------------------------
+    # Step 3: Qwen Beautification
+    # ------------------------------------------------------------------
+    print("[workflow] Step 3/3 — Qwen beautification ...")
+    final_output = beautify_output(gemini_output)
+
+    # ------------------------------------------------------------------
+    # Assemble response
+    # ------------------------------------------------------------------
+    response = {
+        "image_analysis": None,
+        "compressed_data": compressed_data,
+        "gemini_output": gemini_output,
+        "final_output": final_output,
+    }
+
+    # Save output to file for inspection
+    _save_output_to_file("text-only-prompt", response)
 
     print("[workflow] === Pipeline complete ===")
 

@@ -48,15 +48,17 @@ def _load_qwen():
 
     print("[load_models] Loading Qwen3-4B-Instruct-2507 (4-bit) ...")
 
-    _qwen_tokenizer = AutoTokenizer.from_pretrained(QWEN_MODEL_NAME)
-
+    _qwen_tokenizer = AutoTokenizer.from_pretrained(QWEN_MODEL_NAME, trust_remote_code=True)
     _qwen_model = AutoModelForCausalLM.from_pretrained(
         QWEN_MODEL_NAME,
-        quantization_config=_bnb_config,
         device_map="auto",
-        torch_dtype=torch.float16,
+        trust_remote_code=True,
+        quantization_config=BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_use_double_quant=True,
+        ),
     )
-
     print("[load_models] Qwen loaded successfully.")
 
 
@@ -81,68 +83,117 @@ def get_qwen_tokenizer():
 FLORENCE_MODEL_NAME = "microsoft/Florence-2-base"
 
 
-def _patch_forced_bos(config_obj):
-    """Set forced_bos_token_id on a config if missing."""
-    if not hasattr(config_obj, "forced_bos_token_id"):
-        object.__setattr__(config_obj, "forced_bos_token_id", None)
+def _patch_florence_environment():
+    """
+    Applies global class-level patches to transformers classes before loading Florence-2.
+    This resolves backwards compatibility issues when loading Florence-2 in transformers>=5.x.
+    """
+    from transformers import PretrainedConfig, PreTrainedModel, PreTrainedTokenizerBase
+    import torch.nn as nn
+    
+    # 1. Bypass forced_bos_token_id dynamic access blocks
+    PretrainedConfig.forced_bos_token_id = None
+    
+    # 2. Bypass missing SDPA flags in remote code
+    old_getattr = nn.Module.__getattr__
+    def safe_getattr(self, name):
+        if name == "_supports_sdpa": return False
+        if name == "_supports_flash_attn_2": return False
+        return old_getattr(self, name)
+    nn.Module.__getattr__ = safe_getattr
+    
+    # 3. Bypass RobertaTokenizer missing image token attributes
+    PreTrainedTokenizerBase.image_token = '<image>'
+    PreTrainedTokenizerBase.image_token_id = 999999
+    PreTrainedTokenizerBase.additional_special_tokens = []
 
+    # 4. Make EncoderDecoderCache subscriptable for Florence-2's legacy code
+    #    Florence-2 remote code does past_key_values[0][0].shape[2] etc.
+    #    Transformers 5.x replaced tuple caches with EncoderDecoderCache objects.
+    try:
+        from transformers.cache_utils import EncoderDecoderCache, DynamicCache
+
+        class _EmptyCacheProxy:
+            """Proxy that makes past_key_values[i][j].shape[k] return 0 for empty caches."""
+            shape = (0, 0, 0, 0)
+            def __getitem__(self, idx):
+                return self
+
+        _empty = _EmptyCacheProxy()
+
+        def _edc_getitem(self, idx):
+            """Allow past_key_values[idx] to return the idx-th layer's (key, value) tuple."""
+            cache = self.self_attention_cache
+            if isinstance(cache, DynamicCache):
+                if len(cache.layers) == 0:
+                    return (_empty, _empty)
+                layer = cache.layers[idx]
+                if layer.keys is None:
+                    return (_empty, _empty)
+                return (layer.keys, layer.values)
+            return cache[idx]
+
+        def _edc_len(self):
+            cache = self.self_attention_cache
+            if isinstance(cache, DynamicCache):
+                return len(cache.layers)
+            return len(cache)
+
+        EncoderDecoderCache.__getitem__ = _edc_getitem
+        EncoderDecoderCache.__len__ = _edc_len
+    except (ImportError, AttributeError):
+        pass  # Gracefully skip if cache_utils structure differs
 
 def get_florence_model():
     """
     Return (model, processor) for Florence-2.
-    Loads on first call, reuses cached instance afterwards.
+    Loads it lazily on first access.
     """
     global _florence_model, _florence_processor
 
-    if _florence_model is None:
+    if _florence_model is None or _florence_processor is None:
         print("[load_models] Lazy-loading Florence-2-base ...")
+        
+        _patch_florence_environment()
 
         _florence_processor = AutoProcessor.from_pretrained(
             FLORENCE_MODEL_NAME,
-            trust_remote_code=True,
+            trust_remote_code=True
         )
 
         _florence_model = AutoModelForCausalLM.from_pretrained(
             FLORENCE_MODEL_NAME,
             torch_dtype=torch.float16,
             device_map="auto",
-            trust_remote_code=True,
+            trust_remote_code=True
         )
-
-        # ── Patch forced_bos_token_id (removed in transformers 5.x) ──
-        # Florence-2's generate() still reads it from various config objects.
-
-        # 1. Top-level model config
-        _patch_forced_bos(_florence_model.config)
-
-        # 2. text_config (Florence2LanguageConfig — the one causing the crash)
-        if hasattr(_florence_model.config, "text_config"):
-            _patch_forced_bos(_florence_model.config.text_config)
-
-        # 3. vision_config
-        if hasattr(_florence_model.config, "vision_config"):
-            _patch_forced_bos(_florence_model.config.vision_config)
-
-        # 4. Walk ALL nn.Module submodules (language_model, vision_tower, etc.)
-        #    nn.Module stores children in _modules, not __dict__,
-        #    so vars() misses them — named_modules() does not.
-        for _name, module in _florence_model.named_modules():
-            if hasattr(module, "config"):
-                _patch_forced_bos(module.config)
-                # Also patch any nested configs
-                for attr in ("text_config", "decoder", "encoder"):
-                    if hasattr(module.config, attr):
-                        sub = getattr(module.config, attr)
-                        if sub is not None:
-                            _patch_forced_bos(sub)
-
-        # 5. generation_config
-        if hasattr(_florence_model, "generation_config"):
-            _patch_forced_bos(_florence_model.generation_config)
 
         print("[load_models] Florence-2-base loaded successfully.")
 
     return _florence_model, _florence_processor
+
+
+def unload_florence_model():
+    """
+    Remove Florence-2 from GPU and free VRAM.
+    It will be lazy-loaded again on the next image request.
+    """
+    global _florence_model, _florence_processor
+
+    if _florence_model is not None:
+        del _florence_model
+        _florence_model = None
+
+    if _florence_processor is not None:
+        del _florence_processor
+        _florence_processor = None
+
+    import gc
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+    print("[load_models] Florence-2 unloaded — VRAM freed.")
 
 
 # ---------------------------------------------------------------------------
@@ -169,3 +220,21 @@ def get_ocr_reader():
         print("[load_models] EasyOCR loaded successfully.")
 
     return _ocr_reader
+
+
+def unload_ocr_reader():
+    """
+    Remove EasyOCR from GPU and free VRAM.
+    """
+    global _ocr_reader
+
+    if _ocr_reader is not None:
+        del _ocr_reader
+        _ocr_reader = None
+
+    import gc
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+    print("[load_models] EasyOCR unloaded — VRAM freed.")

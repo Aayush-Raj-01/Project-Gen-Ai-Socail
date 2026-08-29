@@ -10,7 +10,8 @@ Both models are lazy-loaded via load_models and stay cached.
 """
 
 from PIL import Image
-from transformers import GenerationConfig
+import torch
+from transformers import GenerationConfig,AutoProcessor, AutoModelForCausalLM
 
 from load_models import get_florence_model, get_ocr_reader
 
@@ -19,38 +20,49 @@ from load_models import get_florence_model, get_ocr_reader
 # Florence-2 helpers
 # ---------------------------------------------------------------------------
 
+from PIL import Image
+from load_models import get_florence_model
+
+
 def _run_florence_task(image: Image.Image, task_prompt: str) -> dict:
     """
     Run a Florence-2 inference task and return the parsed result.
 
     Supported task prompts:
-        <MORE_DETAILED_CAPTION>  —  Detailed natural-language caption.
-        <OD>                     —  Object detection (labels + bboxes).
+        <MORE_DETAILED_CAPTION>
+        <OD>
     """
+
     model, processor = get_florence_model()
+
+    # Store original size for post-processing
+    original_size = (image.width, image.height)
+    
+    # Florence-2 DaViT vision tower requires square feature maps.
+    # Transformers 5.x CLIPImageProcessor fails to resize to square if do_center_crop=False.
+    # So we forcefully resize to a square here.
+    square_image = image.resize((768, 768), Image.Resampling.LANCZOS)
 
     inputs = processor(
         text=task_prompt,
-        images=image,
+        images=square_image,
         return_tensors="pt",
-    ).to(model.device)
-
-    # Build an explicit GenerationConfig to avoid Florence-2 trying to
-    # read forced_bos_token_id from its internal config (removed in
-    # transformers 5.x).
-    gen_config = GenerationConfig(
-        max_new_tokens=1024,
-        do_sample=False,
-        forced_bos_token_id=None,
     )
+
+    inputs = {
+        k: (v.to(dtype=torch.float16, device=model.device) if v.is_floating_point() else v.to(model.device))
+        for k, v in inputs.items()
+    }
 
     generated_ids = model.generate(
         input_ids=inputs["input_ids"],
         pixel_values=inputs["pixel_values"],
-        generation_config=gen_config,
+        max_new_tokens=512,
+        do_sample=False,
+        num_beams=1,  # Greedy decoding — beam search OOMs without KV cache
+        use_cache=False,  # Disable KV cache — Florence-2's remote code is incompatible with transformers 5.x cache API
     )
 
-    # Decode and strip the prompt portion
     generated_text = processor.batch_decode(
         generated_ids,
         skip_special_tokens=False,

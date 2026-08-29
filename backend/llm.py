@@ -56,6 +56,25 @@ Do not invent information.
 Do not remove facts.
 Do not add assumptions."""
 
+MODERATION_SYSTEM_PROMPT = """You are a content moderation classifier.
+
+Analyze the user's input and determine if it violates any of these categories:
+- ADULT: Sexual, pornographic, or explicit content
+- ABUSIVE: Hate speech, harassment, slurs, bullying, or discrimination
+- VIOLENT: Graphic violence, gore, self-harm, or threats
+- ILLEGAL: Drug manufacturing, weapons, hacking instructions, or fraud
+- HARMFUL: Misinformation designed to cause harm, doxxing, or privacy violations
+
+Respond with ONLY valid JSON in this exact format:
+{"safe": true, "reason": ""}
+
+If the content violates any category:
+{"safe": false, "reason": "Brief explanation of what was flagged and which category"}
+
+Be strict but fair. Professional discussions about cybersecurity, medicine, law, etc. are SAFE.
+News articles, research papers, and educational content are SAFE.
+Do NOT flag legitimate business or technical content."""
+
 # ---------------------------------------------------------------------------
 # Target JSON schema for compression output
 # ---------------------------------------------------------------------------
@@ -190,3 +209,43 @@ CONTENT:
     print("[llm] Beautification complete.")
 
     return result
+
+
+def moderate_content(text: str) -> dict:
+    """
+    Check if user input contains adult, abusive, violent, or policy-violating content.
+
+    Uses a short Qwen inference (max 128 tokens) to classify the input.
+
+    Args:
+        text: The user's input text (prompt or OCR-extracted text).
+
+    Returns:
+        {"safe": True, "reason": ""} if content is clean.
+        {"safe": False, "reason": "..."} if content is flagged.
+    """
+    user_prompt = f"""Classify the following user input:
+
+{text[:2000]}"""
+
+    print("[llm] Running content moderation ...")
+    result = _generate(MODERATION_SYSTEM_PROMPT, user_prompt, max_new_tokens=128)
+    print(f"[llm] Moderation result: {result}")
+
+    # Parse JSON response
+    try:
+        cleaned = result.strip()
+        if cleaned.startswith("```"):
+            lines = cleaned.split("\n")
+            lines = [l for l in lines if not l.strip().startswith("```")]
+            cleaned = "\n".join(lines).strip()
+
+        parsed = json.loads(cleaned)
+        return {
+            "safe": bool(parsed.get("safe", True)),
+            "reason": str(parsed.get("reason", "")),
+        }
+    except (json.JSONDecodeError, KeyError):
+        # If parsing fails, default to safe (don't block legitimate content)
+        print("[llm] WARNING: Could not parse moderation response. Defaulting to safe.")
+        return {"safe": True, "reason": ""}
