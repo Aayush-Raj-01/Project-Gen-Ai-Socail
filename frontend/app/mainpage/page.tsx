@@ -376,8 +376,13 @@ export default function MainPage() {
         <Link href="/" className="mp-logo-wrap">
           <motion.div
             className="mp-logo-icon"
-            whileHover={{ scale: 1.22, rotate: [0, -14, 16, 0], transition: { duration: 0.4 } }}
-            whileTap={{ scale: 0.9 }}
+            whileHover={{
+              scale: 1.35,
+              rotate: [0, -20, 20, -10, 10, 0],
+              y: -2,
+              transition: { duration: 0.5, ease: "easeOut" },
+            }}
+            whileTap={{ scale: 0.85, rotate: 0 }}
           >
             ⚡
           </motion.div>
@@ -414,8 +419,16 @@ export default function MainPage() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
+          whileHover={{ scale: 1.05, y: -2 }}
         >
-          <span>✨</span> Multimodal AI Social Studio • v2.0
+          <motion.span
+            animate={{ rotate: [0, 15, -15, 0], scale: [1, 1.2, 1] }}
+            transition={{ repeat: Infinity, duration: 2.8, ease: "easeInOut" }}
+            style={{ display: "inline-block" }}
+          >
+            ✨
+          </motion.span>{" "}
+          Multimodal AI Social Studio • v2.0
         </motion.div>
 
         <h1 className="mp-title">
@@ -450,11 +463,15 @@ export default function MainPage() {
                     initial={{ opacity: 0, scale: 0.8, y: -4 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.8 }}
-                    whileHover={{ scale: 1.03 }}
+                    whileHover={{ scale: 1.06, y: -2 }}
                   >
                     <motion.span
                       className={`mp-icon-badge mp-attach-icon-badge badge-${file.type}`}
-                      whileHover={{ scale: 1.25, rotate: 10 }}
+                      whileHover={{
+                        scale: 1.4,
+                        rotate: [0, -16, 16, 0],
+                        transition: { duration: 0.35, ease: "easeOut" },
+                      }}
                     >
                       {file.type === "image"
                         ? "🖼️"
@@ -465,13 +482,15 @@ export default function MainPage() {
                         : "🎙️"}
                     </motion.span>
                     <span className="mp-attach-filename">{file.name}</span>
-                    <button
+                    <motion.button
                       className="mp-attachment-remove"
                       onClick={() => removeFile(i)}
                       title="Remove attachment"
+                      whileHover={{ scale: 1.3, rotate: 90 }}
+                      whileTap={{ scale: 0.9 }}
                     >
                       ×
-                    </button>
+                    </motion.button>
                   </motion.span>
                 ))}
               </AnimatePresence>
@@ -491,7 +510,12 @@ export default function MainPage() {
                 <div className="mp-link-input-wrap">
                   <motion.span
                     className="mp-icon-badge mp-link-icon-badge"
-                    whileHover={{ scale: 1.25, rotate: 15 }}
+                    whileHover={{
+                      scale: 1.4,
+                      rotate: [0, -20, 20, -10, 0],
+                      transition: { duration: 0.4, ease: "easeOut" },
+                    }}
+                    whileTap={{ scale: 0.9 }}
                   >
                     🔗
                   </motion.span>
@@ -503,16 +527,18 @@ export default function MainPage() {
                     onChange={(e) => setLinkValue(e.target.value)}
                     autoFocus
                   />
-                  <button
+                  <motion.button
                     className="mp-link-close"
                     onClick={() => {
                       setShowLinkInput(false);
                       setLinkValue("");
                     }}
                     title="Close link input"
+                    whileHover={{ scale: 1.25, rotate: 90 }}
+                    whileTap={{ scale: 0.9 }}
                   >
                     ×
-                  </button>
+                  </motion.button>
                 </div>
               </motion.div>
             )}
@@ -541,24 +567,25 @@ export default function MainPage() {
             onChange={(e) => handleFileAttach(e, "video")}
           />
 
-          {/* Toolbar with Motion-Animated Dark-Shaded Icon Badges */}
+          {/* Toolbar with Enhanced Motion-Animated Dark-Shaded Icon Badges */}
           <div className="mp-toolbar">
             <div className="mp-toolbar-left">
               <motion.button
                 className="mp-tool-btn tool-image"
                 onClick={() => imageInputRef.current?.click()}
                 title="Upload image for Florence-2 Vision & OCR"
-                whileHover={{ y: -2, scale: 1.02 }}
-                whileTap={{ scale: 0.96 }}
+                whileHover={{ y: -3, scale: 1.04 }}
+                whileTap={{ scale: 0.94 }}
               >
                 <motion.span
                   className="mp-icon-badge mp-tool-icon-badge"
                   whileHover={{
-                    scale: 1.3,
-                    rotate: [0, -12, 10, -6, 0],
-                    transition: { duration: 0.35, ease: "easeInOut" },
+                    scale: 1.45,
+                    rotate: [0, -18, 16, -10, 6, 0],
+                    y: -2,
+                    transition: { duration: 0.45, ease: "easeOut" },
                   }}
-                  whileTap={{ scale: 0.88 }}
+                  whileTap={{ scale: 0.85 }}
                 >
                   🖼️
                 </motion.span>
@@ -569,17 +596,18 @@ export default function MainPage() {
                 className="mp-tool-btn tool-pdf"
                 onClick={() => pdfInputRef.current?.click()}
                 title="Attach PDF document"
-                whileHover={{ y: -2, scale: 1.02 }}
-                whileTap={{ scale: 0.96 }}
+                whileHover={{ y: -3, scale: 1.04 }}
+                whileTap={{ scale: 0.94 }}
               >
                 <motion.span
                   className="mp-icon-badge mp-tool-icon-badge"
                   whileHover={{
-                    scale: 1.3,
-                    rotate: [0, -12, 10, -6, 0],
-                    transition: { duration: 0.35, ease: "easeInOut" },
+                    scale: 1.45,
+                    y: [0, -4, 2, -2, 0],
+                    rotate: [0, -14, 14, 0],
+                    transition: { duration: 0.45, ease: "easeOut" },
                   }}
-                  whileTap={{ scale: 0.88 }}
+                  whileTap={{ scale: 0.85 }}
                 >
                   📄
                 </motion.span>
@@ -590,17 +618,18 @@ export default function MainPage() {
                 className="mp-tool-btn tool-video"
                 onClick={() => videoInputRef.current?.click()}
                 title="Attach video file"
-                whileHover={{ y: -2, scale: 1.02 }}
-                whileTap={{ scale: 0.96 }}
+                whileHover={{ y: -3, scale: 1.04 }}
+                whileTap={{ scale: 0.94 }}
               >
                 <motion.span
                   className="mp-icon-badge mp-tool-icon-badge"
                   whileHover={{
-                    scale: 1.3,
-                    rotate: [0, -12, 10, -6, 0],
-                    transition: { duration: 0.35, ease: "easeInOut" },
+                    scale: 1.45,
+                    rotate: [0, 18, -16, 8, 0],
+                    y: -2,
+                    transition: { duration: 0.45, ease: "easeOut" },
                   }}
-                  whileTap={{ scale: 0.88 }}
+                  whileTap={{ scale: 0.85 }}
                 >
                   🎬
                 </motion.span>
@@ -620,17 +649,18 @@ export default function MainPage() {
                 className={`mp-tool-btn tool-link ${showLinkInput ? "active" : ""}`}
                 onClick={() => setShowLinkInput(!showLinkInput)}
                 title="Add reference link"
-                whileHover={{ y: -2, scale: 1.02 }}
-                whileTap={{ scale: 0.96 }}
+                whileHover={{ y: -3, scale: 1.04 }}
+                whileTap={{ scale: 0.94 }}
               >
                 <motion.span
                   className="mp-icon-badge mp-tool-icon-badge"
                   whileHover={{
-                    scale: 1.3,
-                    rotate: [0, -12, 10, -6, 0],
-                    transition: { duration: 0.35, ease: "easeInOut" },
+                    scale: 1.45,
+                    rotate: [0, -20, 20, -10, 0],
+                    y: -2,
+                    transition: { duration: 0.45, ease: "easeOut" },
                   }}
-                  whileTap={{ scale: 0.88 }}
+                  whileTap={{ scale: 0.85 }}
                 >
                   🔗
                 </motion.span>
@@ -641,12 +671,16 @@ export default function MainPage() {
                 className={`mp-audio-btn ${isRecording ? "recording" : ""}`}
                 onClick={toggleRecording}
                 title="Voice input"
-                whileHover={{ y: -2, scale: 1.02 }}
-                whileTap={{ scale: 0.96 }}
+                whileHover={{ y: -3, scale: 1.04 }}
+                whileTap={{ scale: 0.94 }}
               >
                 {isRecording ? (
                   <>
-                    <span className="mp-recording-dot" />
+                    <motion.span
+                      className="mp-recording-dot"
+                      animate={{ scale: [1, 1.4, 1], opacity: [1, 0.4, 1] }}
+                      transition={{ repeat: Infinity, duration: 1 }}
+                    />
                     <span>Recording...</span>
                   </>
                 ) : (
@@ -654,11 +688,12 @@ export default function MainPage() {
                     <motion.span
                       className="mp-icon-badge mp-tool-icon-badge"
                       whileHover={{
-                        scale: 1.3,
-                        rotate: [0, -12, 10, -6, 0],
-                        transition: { duration: 0.35, ease: "easeInOut" },
+                        scale: 1.45,
+                        y: [0, -3, 1, -2, 0],
+                        rotate: [0, -16, 16, 0],
+                        transition: { duration: 0.45, ease: "easeOut" },
                       }}
-                      whileTap={{ scale: 0.88 }}
+                      whileTap={{ scale: 0.85 }}
                     >
                       🎙️
                     </motion.span>
@@ -673,8 +708,13 @@ export default function MainPage() {
               disabled={isLoading || (attachedFiles.length === 0 && prompt.trim().length === 0)}
               title="Generate with GenAI"
               onClick={handleSubmit}
-              whileHover={{ scale: 1.14, y: -2 }}
-              whileTap={{ scale: 0.92 }}
+              whileHover={{
+                scale: 1.18,
+                y: -3,
+                rotate: [0, -8, 8, 0],
+                transition: { type: "spring", stiffness: 450, damping: 14 },
+              }}
+              whileTap={{ scale: 0.88, y: 0 }}
             >
               {isLoading ? "⏳" : "➜"}
             </motion.button>
@@ -691,17 +731,42 @@ export default function MainPage() {
               key={idx}
               className="mp-quick-chip"
               onClick={() => setPrompt(chip.text)}
-              whileHover={{ y: -3, scale: 1.04 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              whileHover={{ y: -3, scale: 1.05 }}
+              whileTap={{ scale: 0.94 }}
+              transition={{ type: "spring", stiffness: 450, damping: 18 }}
             >
               <motion.span
                 className={`mp-icon-badge mp-quick-icon-badge badge-${chip.theme}`}
-                whileHover={{
-                  scale: 1.35,
-                  rotate: [0, -15, 15, -8, 0],
-                  transition: { duration: 0.4, ease: "easeInOut" },
-                }}
+                whileHover={
+                  chip.theme === "launch"
+                    ? {
+                        scale: 1.5,
+                        x: [0, 3, 5, 2, 0],
+                        y: [0, -5, -8, -3, 0],
+                        rotate: [0, -16, -24, -12, 0],
+                        transition: { duration: 0.45, ease: "easeOut" },
+                      }
+                    : chip.theme === "linkedin"
+                    ? {
+                        scale: 1.45,
+                        rotate: [0, -18, 18, -10, 6, 0],
+                        y: -3,
+                        transition: { duration: 0.45, ease: "easeOut" },
+                      }
+                    : chip.theme === "carousel"
+                    ? {
+                        scale: 1.45,
+                        rotate: [0, 18, -16, 10, 0],
+                        y: -3,
+                        transition: { duration: 0.45, ease: "easeOut" },
+                      }
+                    : {
+                        scale: 1.45,
+                        y: [0, -5, 2, -3, 0],
+                        rotate: [0, -12, 12, 0],
+                        transition: { duration: 0.45, ease: "easeOut" },
+                      }
+                }
               >
                 {chip.icon}
               </motion.span>
@@ -724,17 +789,18 @@ export default function MainPage() {
                     selectedValue ? "has-value" : ""
                   }`}
                   onClick={() => toggleSelector(key)}
-                  whileHover={{ y: -2, scale: 1.02 }}
-                  whileTap={{ scale: 0.96 }}
+                  whileHover={{ y: -3, scale: 1.04 }}
+                  whileTap={{ scale: 0.94 }}
                 >
                   <motion.span
                     className={`mp-icon-badge mp-selector-icon-badge badge-${data.theme}`}
                     whileHover={{
-                      scale: 1.32,
-                      rotate: [0, -14, 12, -4, 0],
-                      transition: { duration: 0.35, ease: "easeInOut" },
+                      scale: 1.45,
+                      rotate: [0, -18, 18, -10, 6, 0],
+                      y: -2,
+                      transition: { duration: 0.45, ease: "easeOut" },
                     }}
-                    whileTap={{ scale: 0.88 }}
+                    whileTap={{ scale: 0.85 }}
                   >
                     {data.icon}
                   </motion.span>
@@ -742,7 +808,13 @@ export default function MainPage() {
                   {selectedValue && (
                     <span className="mp-selector-value">{selectedValue}</span>
                   )}
-                  <span className="mp-selector-chevron">▼</span>
+                  <motion.span
+                    className="mp-selector-chevron"
+                    animate={{ rotate: isOpen ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    ▼
+                  </motion.span>
                 </motion.button>
 
                 {/* Popup Dropdown with AnimatePresence */}
@@ -851,7 +923,13 @@ export default function MainPage() {
                   <motion.span
                     className="mp-icon-badge badge-final"
                     style={{ width: "28px", height: "28px", fontSize: "15px" }}
-                    whileHover={{ scale: 1.25, rotate: 15 }}
+                    whileHover={{
+                      scale: 1.4,
+                      rotate: [0, -20, 20, -10, 0],
+                      y: -2,
+                      transition: { duration: 0.45, ease: "easeOut" },
+                    }}
+                    whileTap={{ scale: 0.88 }}
                   >
                     ⚡
                   </motion.span>
@@ -862,8 +940,8 @@ export default function MainPage() {
                   <motion.button
                     className="mp-copy-btn"
                     onClick={() => handleCopy(String(response.final_output))}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.08, y: -2 }}
+                    whileTap={{ scale: 0.94 }}
                   >
                     {copied ? "✓ Copied!" : "📋 Copy Output"}
                   </motion.button>
@@ -876,7 +954,13 @@ export default function MainPage() {
                   <div className="mp-section-tag">
                     <motion.span
                       className="mp-icon-badge mp-tag-icon-badge badge-final"
-                      whileHover={{ scale: 1.3, rotate: 12 }}
+                      whileHover={{
+                        scale: 1.45,
+                        rotate: [0, -18, 18, -6, 0],
+                        y: -2,
+                        transition: { duration: 0.4, ease: "easeOut" },
+                      }}
+                      whileTap={{ scale: 0.88 }}
                     >
                       🎯
                     </motion.span>
@@ -894,7 +978,13 @@ export default function MainPage() {
                   <div className="mp-section-tag">
                     <motion.span
                       className="mp-icon-badge mp-tag-icon-badge badge-vision"
-                      whileHover={{ scale: 1.3, rotate: 12 }}
+                      whileHover={{
+                        scale: 1.45,
+                        rotate: [0, -16, 16, 0],
+                        y: -2,
+                        transition: { duration: 0.4, ease: "easeOut" },
+                      }}
+                      whileTap={{ scale: 0.88 }}
                     >
                       🖼️
                     </motion.span>
@@ -917,7 +1007,13 @@ export default function MainPage() {
                   <div className="mp-section-tag">
                     <motion.span
                       className="mp-icon-badge mp-tag-icon-badge badge-video"
-                      whileHover={{ scale: 1.3, rotate: 12 }}
+                      whileHover={{
+                        scale: 1.45,
+                        rotate: [0, 18, -16, 0],
+                        y: -2,
+                        transition: { duration: 0.4, ease: "easeOut" },
+                      }}
+                      whileTap={{ scale: 0.88 }}
                     >
                       🎬
                     </motion.span>
@@ -938,7 +1034,13 @@ export default function MainPage() {
                   <div className="mp-section-tag">
                     <motion.span
                       className="mp-icon-badge mp-tool-icon-badge badge-audio"
-                      whileHover={{ scale: 1.3, rotate: 12 }}
+                      whileHover={{
+                        scale: 1.45,
+                        y: [0, -4, 2, 0],
+                        rotate: [0, -15, 15, 0],
+                        transition: { duration: 0.4, ease: "easeOut" },
+                      }}
+                      whileTap={{ scale: 0.88 }}
                     >
                       🎙️
                     </motion.span>
@@ -959,7 +1061,13 @@ export default function MainPage() {
                   <div className="mp-section-tag">
                     <motion.span
                       className="mp-icon-badge mp-tag-icon-badge badge-vision"
-                      whileHover={{ scale: 1.3, rotate: 12 }}
+                      whileHover={{
+                        scale: 1.45,
+                        y: [0, -4, 2, 0],
+                        rotate: [0, -14, 14, 0],
+                        transition: { duration: 0.4, ease: "easeOut" },
+                      }}
+                      whileTap={{ scale: 0.88 }}
                     >
                       📄
                     </motion.span>
@@ -982,7 +1090,8 @@ export default function MainPage() {
                       <motion.span
                         className="mp-icon-badge badge-audience"
                         style={{ width: "20px", height: "20px", fontSize: "11px" }}
-                        whileHover={{ scale: 1.3, rotate: 12 }}
+                        whileHover={{ scale: 1.45, rotate: [0, -18, 18, 0] }}
+                        whileTap={{ scale: 0.88 }}
                       >
                         🧠
                       </motion.span>
@@ -1004,7 +1113,8 @@ export default function MainPage() {
                       <motion.span
                         className="mp-icon-badge badge-brief"
                         style={{ width: "20px", height: "20px", fontSize: "11px" }}
-                        whileHover={{ scale: 1.3, rotate: 12 }}
+                        whileHover={{ scale: 1.45, y: [0, -4, 2, 0] }}
+                        whileTap={{ scale: 0.88 }}
                       >
                         📦
                       </motion.span>
