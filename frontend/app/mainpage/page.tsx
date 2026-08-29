@@ -301,12 +301,12 @@ export default function MainPage() {
               left: "50%",
               transform: "translate(-50%, -50%)",
               width: "min(440px, 90vw)",
-              background: "linear-gradient(135deg, #1a0a0a 0%, #2a1010 100%)",
-              border: "1px solid rgba(255, 80, 80, 0.3)",
+              background: "#090D0E",
+              border: "1px solid rgba(255, 255, 255, 0.15)",
               borderRadius: 20,
               padding: "32px 28px",
               zIndex: 1000,
-              boxShadow: "0 24px 80px rgba(255, 40, 40, 0.15), 0 0 40px rgba(255, 0, 0, 0.05)",
+              boxShadow: "0 24px 80px rgba(0, 0, 0, 0.8)",
               animation: "fadeIn 0.25s ease-out",
             }}
           >
@@ -316,15 +316,15 @@ export default function MainPage() {
             <h3 style={{
               fontSize: 18,
               fontWeight: 700,
-              color: "#ff6b6b",
+              color: "#FFFFFF",
               textAlign: "center",
               marginBottom: 12,
             }}>
-              Content Blocked
+              Content Notice
             </h3>
             <p style={{
               fontSize: 14,
-              color: "rgba(255, 180, 180, 0.85)",
+              color: "#94A3B8",
               textAlign: "center",
               lineHeight: 1.6,
               marginBottom: 24,
@@ -332,15 +332,15 @@ export default function MainPage() {
               Your request was flagged by our content safety system:
             </p>
             <div style={{
-              background: "rgba(255, 60, 60, 0.08)",
-              border: "1px solid rgba(255, 80, 80, 0.15)",
+              background: "rgba(15, 34, 32, 0.6)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
               borderRadius: 12,
               padding: "14px 18px",
               marginBottom: 24,
             }}>
               <p style={{
                 fontSize: 13,
-                color: "#ff9a9a",
+                color: "#FFFFFF",
                 lineHeight: 1.6,
                 margin: 0,
               }}>
@@ -353,16 +353,16 @@ export default function MainPage() {
                 display: "block",
                 width: "100%",
                 padding: "12px 0",
-                background: "linear-gradient(135deg, #ff4444 0%, #cc2222 100%)",
+                background: "#2DD4BF",
                 border: "none",
                 borderRadius: 12,
-                color: "#fff",
+                color: "#090D0E",
                 fontSize: 14,
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: "pointer",
                 transition: "opacity 0.2s",
               }}
-              onMouseOver={(e) => (e.currentTarget.style.opacity = "0.85")}
+              onMouseOver={(e) => (e.currentTarget.style.opacity = "0.9")}
               onMouseOut={(e) => (e.currentTarget.style.opacity = "1")}
             >
               Understood
@@ -867,12 +867,12 @@ export default function MainPage() {
                 marginTop: 24,
                 padding: "16px 22px",
                 borderRadius: 14,
-                background: "linear-gradient(135deg, rgba(255, 60, 60, 0.15) 0%, rgba(220, 38, 38, 0.08) 100%)",
-                border: "1px solid rgba(255, 80, 80, 0.3)",
-                color: "#fca5a5",
+                background: "rgba(15, 34, 32, 0.8)",
+                border: "1px solid rgba(255, 255, 255, 0.15)",
+                color: "#FFFFFF",
                 fontSize: 13.5,
                 width: "100%",
-                boxShadow: "0 8px 24px rgba(255, 60, 60, 0.1)",
+                boxShadow: "0 8px 24px rgba(0, 0, 0, 0.5)",
               }}
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}

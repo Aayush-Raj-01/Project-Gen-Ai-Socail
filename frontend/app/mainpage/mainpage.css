@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────────────────────
-   GenAI Social Studio — Dark & Moody Theme with Forest Glows
+   GenAI Social Studio — Unified Dark Charcoal & Forest Teal System
    Palette Specifications:
      • Primary Dark Background:     #090D0E (Deep charcoal near-black)
      • Secondary/Glow Background:   #0F2220 (Dark emerald/forest teal)
@@ -47,13 +47,15 @@
   z-index: 0;
 }
 
-/* ── Icon Badges ── */
+/* ── Unified Icon Badges ── */
 .mp-icon-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 8px;
   line-height: 1;
+  background: #0F2220;
+  border: 1px solid var(--border-subtle);
   transition: all 0.2s ease;
   flex-shrink: 0;
 }
@@ -327,38 +329,13 @@
   letter-spacing: 0.1px;
 }
 
-.mp-attachment-chip.chip-image {
-  border-color: rgba(45, 212, 191, 0.35);
-}
-
-.mp-attachment-chip.chip-pdf {
-  border-color: rgba(56, 189, 248, 0.35);
-}
-
-.mp-attachment-chip.chip-video {
-  border-color: rgba(192, 132, 252, 0.35);
-}
-
 .mp-attach-icon-badge {
   width: 22px;
   height: 22px;
   border-radius: 6px;
   font-size: 11px;
-}
-
-.mp-attach-icon-badge.badge-image {
   background: #0F2220;
-  border: 1px solid rgba(45, 212, 191, 0.3);
-}
-
-.mp-attach-icon-badge.badge-pdf {
-  background: #04101e;
-  border: 1px solid rgba(56, 189, 248, 0.3);
-}
-
-.mp-attach-icon-badge.badge-video {
-  background: #110624;
-  border: 1px solid rgba(192, 132, 252, 0.3);
+  border: 1px solid var(--border-subtle);
 }
 
 .mp-attach-filename {
@@ -380,7 +357,7 @@
 }
 
 .mp-attachment-remove:hover {
-  color: #ff5555;
+  color: var(--accent-cyan);
 }
 
 /* ── Link Input Field ── */
@@ -432,7 +409,7 @@
 }
 
 .mp-link-close:hover {
-  color: #ff5555;
+  color: var(--accent-cyan);
 }
 
 /* ── Toolbar ── */
@@ -472,48 +449,17 @@
   height: 24px;
   border-radius: 6px;
   font-size: 12px;
-}
-
-.tool-image .mp-tool-icon-badge {
   background: #0F2220;
-  border: 1px solid rgba(45, 212, 191, 0.3);
+  border: 1px solid var(--border-subtle);
 }
 
-.tool-image:hover {
+.mp-tool-btn:hover {
   background: rgba(45, 212, 191, 0.1);
   border-color: rgba(45, 212, 191, 0.35);
   color: var(--text-primary);
 }
 
-.tool-pdf .mp-tool-icon-badge {
-  background: #082244;
-  border: 1px solid rgba(56, 189, 248, 0.3);
-}
-
-.tool-pdf:hover {
-  background: rgba(56, 189, 248, 0.1);
-  border-color: rgba(56, 189, 248, 0.35);
-  color: var(--text-primary);
-}
-
-.tool-video .mp-tool-icon-badge {
-  background: #270e54;
-  border: 1px solid rgba(192, 132, 252, 0.3);
-}
-
-.tool-video:hover {
-  background: rgba(192, 132, 252, 0.1);
-  border-color: rgba(192, 132, 252, 0.35);
-  color: var(--text-primary);
-}
-
-.tool-link .mp-tool-icon-badge {
-  background: #0F2220;
-  border: 1px solid rgba(45, 212, 191, 0.3);
-}
-
-.tool-link:hover,
-.tool-link.active {
+.mp-tool-btn.active {
   background: rgba(45, 212, 191, 0.15);
   border-color: var(--accent-cyan);
   color: var(--text-primary);
@@ -534,28 +480,23 @@
   color: var(--text-muted);
 }
 
-.mp-audio-btn .mp-tool-icon-badge {
-  background: #3f0717;
-  border: 1px solid rgba(251, 113, 133, 0.3);
-}
-
 .mp-audio-btn:hover {
-  background: rgba(251, 113, 133, 0.1);
-  border-color: rgba(251, 113, 133, 0.35);
+  background: rgba(45, 212, 191, 0.1);
+  border-color: rgba(45, 212, 191, 0.35);
   color: var(--text-primary);
 }
 
 .mp-audio-btn.recording {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: #ef4444;
-  color: #fca5a5;
+  background: rgba(45, 212, 191, 0.15);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
 }
 
 .mp-recording-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ef4444;
+  background: var(--accent-cyan);
 }
 
 /* ── Primary Action Submit Button (High-Contrast Dark Text #090D0E on Solid Bright Cyan #2DD4BF) ── */
@@ -635,26 +576,6 @@
   border: 1px solid var(--border-subtle);
 }
 
-.badge-launch {
-  background: #140803;
-  border: 1px solid rgba(251, 146, 60, 0.25);
-}
-
-.badge-linkedin {
-  background: #03101c;
-  border: 1px solid rgba(56, 189, 248, 0.25);
-}
-
-.badge-carousel {
-  background: #170318;
-  border: 1px solid rgba(232, 121, 249, 0.25);
-}
-
-.badge-brief {
-  background: #0F2220;
-  border: 1px solid rgba(45, 212, 191, 0.25);
-}
-
 .mp-quick-chip:hover {
   color: var(--accent-cyan);
   background: #090D0E;
@@ -698,36 +619,8 @@
   height: 24px;
   border-radius: 6px;
   font-size: 12.5px;
-}
-
-.badge-audience {
-  background: #04101e;
-  border: 1px solid rgba(56, 189, 248, 0.2);
-}
-
-.badge-tone {
-  background: #11051e;
-  border: 1px solid rgba(168, 85, 247, 0.2);
-}
-
-.badge-language {
   background: #0F2220;
-  border: 1px solid rgba(45, 212, 191, 0.2);
-}
-
-.badge-detail {
-  background: #160a02;
-  border: 1px solid rgba(251, 191, 36, 0.2);
-}
-
-.badge-objective {
-  background: #180308;
-  border: 1px solid rgba(244, 63, 94, 0.2);
-}
-
-.badge-style {
-  background: #080718;
-  border: 1px solid rgba(129, 140, 248, 0.2);
+  border: 1px solid var(--border-subtle);
 }
 
 .mp-selector-trigger:hover {
@@ -927,26 +820,8 @@
   height: 20px;
   border-radius: 5px;
   font-size: 11px;
-}
-
-.badge-final {
   background: #0F2220;
-  border: 1px solid rgba(45, 212, 191, 0.35);
-}
-
-.badge-vision {
-  background: #082244;
-  border: 1px solid rgba(56, 189, 248, 0.3);
-}
-
-.badge-video {
-  background: #270e54;
-  border: 1px solid rgba(192, 132, 252, 0.3);
-}
-
-.badge-audio {
-  background: #3f0717;
-  border: 1px solid rgba(251, 113, 133, 0.3);
+  border: 1px solid var(--border-subtle);
 }
 
 .mp-final-box {
