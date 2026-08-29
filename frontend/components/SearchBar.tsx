@@ -257,26 +257,25 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         .search-bar-input-wrap {
           display: flex;
           align-items: center;
-          background: rgba(10, 24, 22, 0.75);
-          border: 1px solid rgba(0, 200, 150, 0.18);
+          background: #000000;
+          border: 1px solid rgba(57, 180, 154, 0.22);
           border-radius: 9999px;
           padding: 6px 14px 6px 12px;
           backdrop-filter: blur(16px);
           -webkit-backdrop-filter: blur(16px);
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
           transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .search-bar-input-wrap:hover {
-          border-color: rgba(0, 200, 150, 0.35);
-          background: rgba(12, 28, 26, 0.85);
-          box-shadow: 0 6px 24px rgba(0, 200, 150, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+          border-color: rgba(57, 180, 154, 0.4);
+          background: #040708;
         }
 
         .search-bar-input-wrap:focus-within {
-          border-color: #00c896;
-          background: rgba(8, 20, 18, 0.95);
-          box-shadow: 0 0 0 3px rgba(0, 200, 150, 0.15), 0 8px 30px rgba(0, 200, 150, 0.12);
+          border-color: #39b49a;
+          background: #000000;
+          box-shadow: 0 0 0 2px rgba(57, 180, 154, 0.2), 0 6px 20px rgba(0, 0, 0, 0.8);
         }
 
         .search-icon-btn {
@@ -285,7 +284,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           justify-content: center;
           background: transparent;
           border: none;
-          color: #00c896;
+          color: #39b49a;
           cursor: pointer;
           padding: 4px;
           border-radius: 50%;
@@ -294,7 +293,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         }
 
         .search-icon-btn:hover {
-          color: #4aedc4;
+          color: #5ce1c6;
           transform: scale(1.1);
         }
 
@@ -303,7 +302,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           background: transparent;
           border: none;
           outline: none;
-          color: #e0e8e6;
+          color: #ffffff;
           font-size: 13.5px;
           font-weight: 400;
           letter-spacing: 0.1px;
@@ -311,13 +310,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         }
 
         .search-input-field::placeholder {
-          color: rgba(224, 232, 230, 0.4);
+          color: #90a4a2;
+          opacity: 0.6;
         }
 
         .search-clear-btn {
           background: rgba(255, 255, 255, 0.08);
           border: none;
-          color: rgba(255, 255, 255, 0.6);
+          color: #90a4a2;
           cursor: pointer;
           width: 18px;
           height: 18px;
@@ -341,9 +341,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           gap: 2px;
           font-size: 10.5px;
           font-family: monospace;
-          color: rgba(0, 200, 150, 0.7);
-          background: rgba(0, 200, 150, 0.08);
-          border: 1px solid rgba(0, 200, 150, 0.2);
+          color: #39b49a;
+          background: rgba(57, 180, 154, 0.1);
+          border: 1px solid rgba(57, 180, 154, 0.25);
           padding: 2px 6px;
           border-radius: 6px;
           margin-left: 8px;
@@ -356,10 +356,10 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           top: calc(100% + 8px);
           left: 0;
           right: 0;
-          background: rgba(8, 18, 16, 0.95);
-          border: 1px solid rgba(0, 200, 150, 0.2);
+          background: #000000;
+          border: 1px solid rgba(57, 180, 154, 0.25);
           border-radius: 16px;
-          box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 200, 150, 0.05);
+          box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85);
           backdrop-filter: blur(24px);
           -webkit-backdrop-filter: blur(24px);
           overflow: hidden;

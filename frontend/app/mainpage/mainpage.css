@@ -108,6 +108,54 @@
   max-width: 420px;
 }
 
+/* ── Dark Black Search Bar Styling ── */
+.mp-header-search .search-bar-input-wrap {
+  background: #000000 !important;
+  border: 1px solid rgba(57, 180, 154, 0.22) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7) !important;
+}
+
+.mp-header-search .search-bar-input-wrap:hover {
+  background: #020405 !important;
+  border-color: rgba(57, 180, 154, 0.4) !important;
+}
+
+.mp-header-search .search-bar-input-wrap:focus-within {
+  background: #000000 !important;
+  border-color: var(--accent-teal) !important;
+  box-shadow: 0 0 0 2px rgba(57, 180, 154, 0.2), 0 6px 20px rgba(0, 0, 0, 0.8) !important;
+}
+
+.mp-header-search .search-icon-btn {
+  color: var(--accent-teal) !important;
+}
+
+.mp-header-search .search-input-field {
+  color: var(--text-white) !important;
+}
+
+.mp-header-search .search-input-field::placeholder {
+  color: var(--text-gray-teal) !important;
+  opacity: 0.6 !important;
+}
+
+.mp-header-search .search-kbd-badge {
+  color: var(--accent-teal) !important;
+  background: rgba(57, 180, 154, 0.1) !important;
+  border: 1px solid rgba(57, 180, 154, 0.25) !important;
+}
+
+.mp-header-search .search-dropdown {
+  background: #000000 !important;
+  border: 1px solid rgba(57, 180, 154, 0.25) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85) !important;
+}
+
+.mp-header-search .search-dropdown-footer {
+  background: #040708 !important;
+  border-top: 1px solid rgba(57, 180, 154, 0.15) !important;
+}
+
 .mp-header-actions {
   display: flex;
   align-items: center;
