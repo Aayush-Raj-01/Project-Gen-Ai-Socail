@@ -1,7 +1,6 @@
-<<<<<<< HEAD
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { NavyButton } from "../components/NavyButton";
@@ -9,7 +8,6 @@ import { SearchBar, type SearchResultItem } from "../components/SearchBar";
 
 export default function LandingPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"all" | "vision" | "llm" | "ocr">("all");
 
   const handleSearchResultSelect = (item: SearchResultItem) => {
     // Navigate to studio with selected item/template
@@ -626,12 +624,3 @@ export default function LandingPage() {
     </div>
   );
 }
-=======
-export default function LandingPage() {
-  return (
-    <div>
-      <h1>Landing Page</h1>
-    </div>
-  );
-}
->>>>>>> cd04194944c3c253701ad571a5115640423c06cb

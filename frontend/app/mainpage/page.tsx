@@ -1,14 +1,11 @@
 "use client";
 
-<<<<<<< HEAD
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "motion/react";
 import { SearchBar, type SearchResultItem } from "../components/SearchBar";
 import { NavyButton } from "../components/NavyButton";
-=======
-import { useState, useRef, useCallback } from "react";
 import "./mainpage.css";
->>>>>>> cd04194944c3c253701ad571a5115640423c06cb
 
 /* ────────────────────────────────────────────
    Data for the bubble-type popup selectors
@@ -17,6 +14,7 @@ const SELECTOR_DATA = {
   targetAudience: {
     label: "Target Audience",
     icon: "👥",
+    theme: "audience",
     options: [
       "Student",
       "Executive",
@@ -29,6 +27,7 @@ const SELECTOR_DATA = {
   tone: {
     label: "Tone",
     icon: "🎭",
+    theme: "tone",
     options: [
       "Professional",
       "Formal",
@@ -41,16 +40,19 @@ const SELECTOR_DATA = {
   language: {
     label: "Language",
     icon: "🌐",
+    theme: "language",
     options: ["English", "Hindi", "French"],
   },
   levelOfDetail: {
     label: "Level of Detail",
     icon: "📊",
+    theme: "detail",
     options: ["Short", "Medium", "Detailed"],
   },
   communicationObjective: {
     label: "Objective",
     icon: "🎯",
+    theme: "objective",
     options: [
       "Awareness",
       "Training",
@@ -63,6 +65,7 @@ const SELECTOR_DATA = {
   contentStyle: {
     label: "Content Style",
     icon: "✍️",
+    theme: "style",
     options: [
       "Bullet Points",
       "Storytelling",
@@ -75,13 +78,26 @@ const SELECTOR_DATA = {
 
 type SelectorKey = keyof typeof SELECTOR_DATA;
 
-/* ────────────────────────────────────────────
-   Inline styles (no separate CSS file needed)
-   ──────────────────────────────────────────── */
-
 export default function MainPage() {
   // ── State ──
-  const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useState(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get("q");
+      const item = params.get("item");
+      const cat = params.get("cat");
+      if (q) {
+        return `Create high-impact social content for: ${q}`;
+      } else if (item) {
+        if (cat === "Templates") {
+          return `Create a ${item} focusing on: `;
+        } else {
+          return `Work with ${item}: `;
+        }
+      }
+    }
+    return "";
+  });
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkValue, setLinkValue] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<
@@ -101,25 +117,6 @@ export default function MainPage() {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
-
-  // Sync URL search params on mount from landing page
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const q = params.get("q");
-      const item = params.get("item");
-      const cat = params.get("cat");
-      if (q) {
-        setPrompt(`Create high-impact social content for: ${q}`);
-      } else if (item) {
-        if (cat === "Templates") {
-          setPrompt(`Create a ${item} focusing on: `);
-        } else {
-          setPrompt(`Work with ${item}: `);
-        }
-      }
-    }
-  }, []);
 
   // ── Handlers ──
   const handleFileAttach = useCallback(
@@ -203,6 +200,21 @@ export default function MainPage() {
     setResponse(null);
     setModerationWarning(null);
 
+    // Assemble prompt text with user-selected preferences and reference link
+    const activeSelections = Object.entries(selections)
+      .filter(([, val]) => Boolean(val))
+      .map(([key, val]) => `${SELECTOR_DATA[key as SelectorKey]?.label || key}: ${val}`);
+
+    let fullPrompt = prompt.trim();
+    if (linkValue.trim()) {
+      fullPrompt = fullPrompt ? `${fullPrompt}\n\nReference Link: ${linkValue.trim()}` : `Reference Link: ${linkValue.trim()}`;
+    }
+    if (activeSelections.length > 0) {
+      fullPrompt = fullPrompt
+        ? `${fullPrompt}\n\n[Preferences: ${activeSelections.join(", ")}]`
+        : `[Preferences: ${activeSelections.join(", ")}]`;
+    }
+
     try {
       let res: Response;
 
@@ -220,7 +232,7 @@ export default function MainPage() {
         res = await fetch("http://localhost:8000/process-prompt", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: prompt.trim() }),
+          body: JSON.stringify({ prompt: fullPrompt }),
         });
       }
 
@@ -243,664 +255,35 @@ export default function MainPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [attachedFiles, prompt]);
+  }, [attachedFiles, prompt, selections, linkValue]);
+
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (text: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const quickChips = [
+    { label: "Viral Launch", icon: "🚀", theme: "launch", text: "Create a high-impact product launch announcement for: " },
+    { label: "LinkedIn Strategy", icon: "💼", theme: "linkedin", text: "Write a thought-provoking LinkedIn post with actionable insights on: " },
+    { label: "Carousel Script", icon: "📸", theme: "carousel", text: "Design a 5-slide Instagram carousel breakdown with hooks and visuals for: " },
+    { label: "Executive Brief", icon: "📊", theme: "brief", text: "Produce a bulleted executive summary and recommendations on: " },
+  ];
 
   return (
     <div className="mainpage-root">
+      {/* ── Ambient Central Glow & Particles ── */}
+      <div className="mainpage-glow-center" />
+      <div className="mp-particle" />
+      <div className="mp-particle" />
+      <div className="mp-particle" />
+      <div className="mp-particle" />
+      <div className="mp-particle" />
 
-<<<<<<< HEAD
-        /* ── Ambient Background Glow ── */
-        .mainpage-root::before {
-          content: '';
-          position: fixed;
-          top: -40%;
-          left: -20%;
-          width: 80%;
-          height: 80%;
-          background: radial-gradient(ellipse at center, rgba(0, 200, 150, 0.06) 0%, transparent 70%);
-          pointer-events: none;
-          z-index: 0;
-        }
-
-        .mainpage-root::after {
-          content: '';
-          position: fixed;
-          bottom: -30%;
-          right: -20%;
-          width: 70%;
-          height: 70%;
-          background: radial-gradient(ellipse at center, rgba(0, 180, 140, 0.04) 0%, transparent 70%);
-          pointer-events: none;
-          z-index: 0;
-        }
-
-        /* ── Header ── */
-        .mp-header {
-          width: 100%;
-          max-width: 1200px;
-          padding: 20px 36px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 20px;
-          position: relative;
-          z-index: 50;
-        }
-
-        .mp-header-search {
-          flex: 1 1 360px;
-          max-width: 440px;
-        }
-
-        .mp-logo {
-          font-size: 22px;
-          font-weight: 700;
-          letter-spacing: -0.5px;
-          background: linear-gradient(135deg, #00c896 0%, #00a87a 50%, #008f6a 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-
-        .mp-logo-sub {
-          font-size: 11px;
-          font-weight: 400;
-          color: rgba(255,255,255,0.3);
-          letter-spacing: 2px;
-          text-transform: uppercase;
-          margin-left: 8px;
-        }
-
-        .mp-header-actions {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .mp-header-btn {
-          padding: 8px 20px;
-          border-radius: 8px;
-          font-size: 13px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          border: 1px solid rgba(0, 200, 150, 0.15);
-          background: rgba(0, 200, 150, 0.06);
-          color: #a0d4c4;
-        }
-
-        .mp-header-btn:hover {
-          background: rgba(0, 200, 150, 0.12);
-          border-color: rgba(0, 200, 150, 0.3);
-          color: #00c896;
-        }
-
-        /* ── Main Content ── */
-        .mp-content {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          max-width: 820px;
-          padding: 40px 24px 60px;
-          position: relative;
-          z-index: 10;
-        }
-
-        .mp-title {
-          font-size: 38px;
-          font-weight: 300;
-          text-align: center;
-          margin-bottom: 8px;
-          letter-spacing: -1px;
-          color: rgba(255, 255, 255, 0.85);
-          line-height: 1.2;
-        }
-
-        .mp-title em {
-          font-style: italic;
-          font-weight: 400;
-          background: linear-gradient(135deg, #00c896 0%, #4aedc4 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-
-        .mp-subtitle {
-          font-size: 14px;
-          color: rgba(255, 255, 255, 0.35);
-          text-align: center;
-          margin-bottom: 40px;
-          letter-spacing: 0.3px;
-        }
-
-        /* ── Prompt Card ── */
-        .mp-prompt-card {
-          width: 100%;
-          background: rgba(10, 20, 18, 0.85);
-          border: 1px solid rgba(0, 200, 150, 0.08);
-          border-radius: 20px;
-          padding: 0;
-          backdrop-filter: blur(40px);
-          -webkit-backdrop-filter: blur(40px);
-          box-shadow:
-            0 0 60px rgba(0, 200, 150, 0.03),
-            0 20px 60px rgba(0, 0, 0, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.03);
-          transition: border-color 0.4s ease, box-shadow 0.4s ease;
-        }
-
-        .mp-prompt-card:focus-within {
-          border-color: rgba(0, 200, 150, 0.2);
-          box-shadow:
-            0 0 80px rgba(0, 200, 150, 0.06),
-            0 20px 60px rgba(0, 0, 0, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.05);
-        }
-
-        /* ── Prompt Textarea ── */
-        .mp-textarea-wrap {
-          padding: 24px 28px 12px;
-        }
-
-        .mp-textarea {
-          width: 100%;
-          min-height: 100px;
-          background: transparent;
-          border: none;
-          outline: none;
-          color: #d4e8e2;
-          font-size: 15px;
-          line-height: 1.7;
-          resize: none;
-          font-family: inherit;
-          letter-spacing: 0.2px;
-        }
-
-        .mp-textarea::placeholder {
-          color: rgba(255, 255, 255, 0.2);
-        }
-
-        /* ── Attached Files ── */
-        .mp-attachments {
-          padding: 0 28px;
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-        }
-
-        .mp-attachment-chip {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 5px 12px;
-          border-radius: 20px;
-          font-size: 12px;
-          font-weight: 500;
-          background: rgba(0, 200, 150, 0.08);
-          border: 1px solid rgba(0, 200, 150, 0.12);
-          color: #7dd4b8;
-          animation: chipIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        @keyframes chipIn {
-          from { transform: scale(0.8); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-
-        .mp-attachment-remove {
-          background: none;
-          border: none;
-          color: rgba(255,255,255,0.3);
-          cursor: pointer;
-          font-size: 14px;
-          line-height: 1;
-          padding: 0;
-          transition: color 0.2s;
-        }
-
-        .mp-attachment-remove:hover {
-          color: #ff6b6b;
-        }
-
-        /* ── Link Input ── */
-        .mp-link-section {
-          padding: 0 28px;
-          margin-top: 8px;
-          animation: slideDown 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        @keyframes slideDown {
-          from { opacity: 0; transform: translateY(-8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        .mp-link-input-wrap {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 16px;
-          border-radius: 12px;
-          background: rgba(0, 200, 150, 0.04);
-          border: 1px solid rgba(0, 200, 150, 0.1);
-        }
-
-        .mp-link-icon {
-          font-size: 14px;
-          color: rgba(0, 200, 150, 0.5);
-        }
-
-        .mp-link-input {
-          flex: 1;
-          background: transparent;
-          border: none;
-          outline: none;
-          color: #a0d4c4;
-          font-size: 13px;
-          font-family: inherit;
-        }
-
-        .mp-link-input::placeholder {
-          color: rgba(255, 255, 255, 0.15);
-        }
-
-        .mp-link-close {
-          background: none;
-          border: none;
-          color: rgba(255,255,255,0.25);
-          cursor: pointer;
-          font-size: 16px;
-          padding: 0;
-          transition: color 0.2s;
-        }
-
-        .mp-link-close:hover {
-          color: #ff6b6b;
-        }
-
-        /* ── Toolbar ── */
-        .mp-toolbar {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 14px 24px 18px;
-          border-top: 1px solid rgba(255, 255, 255, 0.04);
-          margin-top: 8px;
-        }
-
-        .mp-toolbar-left {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-
-        .mp-tool-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 8px 14px;
-          border-radius: 10px;
-          font-size: 12px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-          border: 1px solid transparent;
-          background: rgba(255, 255, 255, 0.03);
-          color: rgba(255, 255, 255, 0.45);
-        }
-
-        .mp-tool-btn:hover {
-          background: rgba(0, 200, 150, 0.08);
-          color: #7dd4b8;
-          border-color: rgba(0, 200, 150, 0.12);
-        }
-
-        .mp-tool-btn.active {
-          background: rgba(0, 200, 150, 0.1);
-          color: #00c896;
-          border-color: rgba(0, 200, 150, 0.2);
-        }
-
-        .mp-tool-icon {
-          font-size: 15px;
-        }
-
-        /* ── Audio Recording Btn ── */
-        .mp-audio-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 8px 14px;
-          border-radius: 10px;
-          font-size: 12px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-          border: 1px solid transparent;
-          background: rgba(255, 255, 255, 0.03);
-          color: rgba(255, 255, 255, 0.45);
-          position: relative;
-        }
-
-        .mp-audio-btn:hover {
-          background: rgba(0, 200, 150, 0.08);
-          color: #7dd4b8;
-          border-color: rgba(0, 200, 150, 0.12);
-        }
-
-        .mp-audio-btn.recording {
-          background: rgba(255, 80, 80, 0.12);
-          color: #ff6b6b;
-          border-color: rgba(255, 80, 80, 0.25);
-          animation: pulse-recording 1.5s infinite;
-        }
-
-        @keyframes pulse-recording {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(255, 80, 80, 0.2); }
-          50% { box-shadow: 0 0 0 6px rgba(255, 80, 80, 0); }
-        }
-
-        .mp-recording-dot {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          background: #ff6b6b;
-          animation: blink 1s infinite;
-        }
-
-        @keyframes blink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.3; }
-        }
-
-        /* ── Submit Button ── */
-        .mp-submit-btn {
-          width: 40px;
-          height: 40px;
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          border: none;
-          background: linear-gradient(135deg, #00c896 0%, #009e78 100%);
-          color: #050a09;
-          font-size: 18px;
-          box-shadow: 0 4px 20px rgba(0, 200, 150, 0.2);
-        }
-
-        .mp-submit-btn:hover {
-          transform: scale(1.05);
-          box-shadow: 0 6px 30px rgba(0, 200, 150, 0.35);
-        }
-
-        .mp-submit-btn:active {
-          transform: scale(0.97);
-        }
-
-        .mp-submit-btn:disabled {
-          opacity: 0.3;
-          cursor: default;
-          transform: none;
-          box-shadow: none;
-        }
-
-        /* ── Selectors Bar (Bubble Popups) ── */
-        .mp-selectors-bar {
-          width: 100%;
-          margin-top: 20px;
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-          justify-content: center;
-        }
-
-        .mp-selector-trigger {
-          display: inline-flex;
-          align-items: center;
-          gap: 7px;
-          padding: 9px 18px;
-          border-radius: 50px;
-          font-size: 13px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          border: 1px solid rgba(0, 200, 150, 0.1);
-          background: rgba(10, 20, 18, 0.7);
-          color: rgba(255, 255, 255, 0.5);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          position: relative;
-          user-select: none;
-        }
-
-        .mp-selector-trigger:hover {
-          border-color: rgba(0, 200, 150, 0.25);
-          color: #a0d4c4;
-          background: rgba(0, 200, 150, 0.06);
-        }
-
-        .mp-selector-trigger.active {
-          border-color: rgba(0, 200, 150, 0.3);
-          color: #00c896;
-          background: rgba(0, 200, 150, 0.08);
-          box-shadow: 0 0 20px rgba(0, 200, 150, 0.08);
-        }
-
-        .mp-selector-trigger.has-value {
-          border-color: rgba(0, 200, 150, 0.2);
-          color: #7dd4b8;
-        }
-
-        .mp-selector-value {
-          font-size: 11px;
-          padding: 2px 8px;
-          border-radius: 20px;
-          background: rgba(0, 200, 150, 0.12);
-          color: #4aedc4;
-          font-weight: 600;
-          letter-spacing: 0.3px;
-        }
-
-        .mp-selector-chevron {
-          font-size: 10px;
-          transition: transform 0.3s;
-          color: rgba(255, 255, 255, 0.25);
-        }
-
-        .mp-selector-trigger.active .mp-selector-chevron {
-          transform: rotate(180deg);
-          color: #00c896;
-        }
-
-        /* ── Popup Dropdown ── */
-        .mp-popup-overlay {
-          position: fixed;
-          inset: 0;
-          z-index: 50;
-        }
-
-        .mp-popup {
-          position: absolute;
-          bottom: calc(100% + 12px);
-          left: 50%;
-          transform: translateX(-50%);
-          min-width: 200px;
-          background: rgba(12, 24, 20, 0.95);
-          border: 1px solid rgba(0, 200, 150, 0.12);
-          border-radius: 16px;
-          padding: 8px;
-          backdrop-filter: blur(40px);
-          -webkit-backdrop-filter: blur(40px);
-          box-shadow:
-            0 20px 60px rgba(0, 0, 0, 0.5),
-            0 0 40px rgba(0, 200, 150, 0.04),
-            inset 0 1px 0 rgba(255, 255, 255, 0.04);
-          z-index: 100;
-          animation: popupIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        @keyframes popupIn {
-          from { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.95); }
-          to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
-        }
-
-        .mp-popup-title {
-          padding: 8px 12px 6px;
-          font-size: 11px;
-          font-weight: 600;
-          color: rgba(255, 255, 255, 0.25);
-          text-transform: uppercase;
-          letter-spacing: 1.5px;
-        }
-
-        .mp-popup-option {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 10px 14px;
-          border-radius: 10px;
-          font-size: 13px;
-          cursor: pointer;
-          transition: all 0.2s;
-          color: rgba(255, 255, 255, 0.6);
-          border: none;
-          background: none;
-          width: 100%;
-          text-align: left;
-          font-family: inherit;
-        }
-
-        .mp-popup-option:hover {
-          background: rgba(0, 200, 150, 0.08);
-          color: #a0d4c4;
-        }
-
-        .mp-popup-option.selected {
-          background: rgba(0, 200, 150, 0.1);
-          color: #00c896;
-        }
-
-        .mp-popup-option-dot {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          border: 1.5px solid rgba(255, 255, 255, 0.2);
-          transition: all 0.2s;
-          flex-shrink: 0;
-        }
-
-        .mp-popup-option.selected .mp-popup-option-dot {
-          background: #00c896;
-          border-color: #00c896;
-          box-shadow: 0 0 8px rgba(0, 200, 150, 0.4);
-        }
-
-        /* ── Hidden file inputs ── */
-        .mp-hidden-input {
-          display: none;
-        }
-
-        /* ── Floating particles (decorative) ── */
-        .mp-particle {
-          position: fixed;
-          width: 2px;
-          height: 2px;
-          border-radius: 50%;
-          background: rgba(0, 200, 150, 0.15);
-          pointer-events: none;
-          z-index: 0;
-        }
-
-        .mp-particle:nth-child(1) { top: 15%; left: 10%; animation: float1 8s infinite; }
-        .mp-particle:nth-child(2) { top: 25%; right: 15%; animation: float2 12s infinite; width: 3px; height: 3px; }
-        .mp-particle:nth-child(3) { bottom: 30%; left: 20%; animation: float3 10s infinite; }
-        .mp-particle:nth-child(4) { top: 60%; right: 25%; animation: float1 14s infinite; width: 1.5px; height: 1.5px; }
-        .mp-particle:nth-child(5) { bottom: 20%; right: 10%; animation: float2 9s infinite; }
-
-        @keyframes float1 {
-          0%, 100% { transform: translateY(0) translateX(0); opacity: 0.15; }
-          50% { transform: translateY(-30px) translateX(10px); opacity: 0.3; }
-        }
-
-        @keyframes float2 {
-          0%, 100% { transform: translateY(0) translateX(0); opacity: 0.1; }
-          33% { transform: translateY(-20px) translateX(-15px); opacity: 0.25; }
-          66% { transform: translateY(10px) translateX(5px); opacity: 0.15; }
-        }
-
-        @keyframes float3 {
-          0%, 100% { transform: translateY(0) translateX(0); opacity: 0.2; }
-          50% { transform: translateY(-25px) translateX(-10px); opacity: 0.35; }
-        }
-
-        /* ── Responsive ── */
-        @media (max-width: 768px) {
-          .mp-header {
-            padding: 16px 20px;
-            flex-wrap: wrap;
-            gap: 12px;
-          }
-
-          .mp-header-search {
-            order: 3;
-            width: 100%;
-            max-width: 100%;
-            min-width: 100%;
-          }
-
-          .mp-header-actions {
-            margin-left: auto;
-          }
-
-          .mp-content {
-            padding: 20px 16px 40px;
-          }
-
-          .mp-title {
-            font-size: 26px;
-          }
-
-          .mp-textarea-wrap {
-            padding: 18px 18px 8px;
-          }
-
-          .mp-toolbar {
-            padding: 12px 16px 14px;
-            flex-wrap: wrap;
-            gap: 8px;
-          }
-
-          .mp-toolbar-left {
-            flex-wrap: wrap;
-          }
-
-          .mp-selectors-bar {
-            gap: 6px;
-          }
-
-          .mp-selector-trigger {
-            padding: 7px 14px;
-            font-size: 12px;
-          }
-
-          .mp-attachments {
-            padding: 0 18px;
-          }
-
-          .mp-link-section {
-            padding: 0 18px;
-          }
-
-          .mp-popup {
-            min-width: 170px;
-          }
-        }
-      `}</style>
-=======
       {/* ── Moderation Warning Popup ── */}
       {moderationWarning && (
         <>
@@ -990,49 +373,57 @@ export default function MainPage() {
           </div>
         </>
       )}
->>>>>>> cd04194944c3c253701ad571a5115640423c06cb
-
-      {/* Floating particles */}
-      <div className="mp-particle" />
-      <div className="mp-particle" />
-      <div className="mp-particle" />
-      <div className="mp-particle" />
-      <div className="mp-particle" />
 
       {/* ── Header ── */}
       <header className="mp-header">
-        <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "baseline", flexShrink: 0 }}>
+        <Link href="/" className="mp-logo-wrap">
+          <motion.div
+            className="mp-logo-icon"
+            whileHover={{ scale: 1.22, rotate: [0, -14, 16, 0], transition: { duration: 0.4 } }}
+            whileTap={{ scale: 0.9 }}
+          >
+            ⚡
+          </motion.div>
           <span className="mp-logo">GenAI Social</span>
-          <span className="mp-logo-sub">Studio</span>
+          <span className="mp-logo-badge">Studio</span>
         </Link>
 
         {/* ── Search Bar ── */}
         <SearchBar
-          placeholder="Search here..."
+          placeholder="Search templates, models, selectors..."
           onSelectResult={handleSearchResultSelect}
           onSearchSubmit={handleSearchSubmit}
           className="mp-header-search"
         />
 
         <div className="mp-header-actions">
-          <Link href="/">
-            <NavyButton variant="ghost" size="sm">
+          <Link href="/landingpage">
+            <NavyButton variant="gradient" size="sm">
               ← Landing
             </NavyButton>
           </Link>
-          <button className="mp-header-btn">History</button>
+          <button className="mp-header-btn">Templates</button>
           <button className="mp-header-btn">Settings</button>
         </div>
       </header>
 
       {/* ── Main Content ── */}
       <main className="mp-content">
+        <motion.div
+          className="mp-hero-badge"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <span>✨</span> Multimodal AI Social Studio • v2.0
+        </motion.div>
+
         <h1 className="mp-title">
           Craft your content with a touch of{" "}
-          <em>intelligence</em>
+          <span className="mp-title-highlight">intelligence</span>
         </h1>
         <p className="mp-subtitle">
-          Generate AI-powered social content tailored to your audience
+          Generate high-converting, multimodal social content tailored to your audience & goals
         </p>
 
         {/* ── Prompt Card ── */}
@@ -1041,62 +432,89 @@ export default function MainPage() {
           <div className="mp-textarea-wrap">
             <textarea
               className="mp-textarea"
-              placeholder="Describe what you want to create..."
+              placeholder="Describe what you want to create or attach an image / document..."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               rows={4}
             />
           </div>
 
-          {/* Attached Files */}
+          {/* Attached Files with Dark-Shaded Badges & Motion */}
           {attachedFiles.length > 0 && (
             <div className="mp-attachments">
-              {attachedFiles.map((file, i) => (
-                <span key={i} className="mp-attachment-chip">
-                  <span>
-                    {file.type === "image"
-                      ? "🖼️"
-                      : file.type === "pdf"
-                      ? "📄"
-                      : "🎬"}
-                  </span>
-                  {file.name}
-                  <button
-                    className="mp-attachment-remove"
-                    onClick={() => removeFile(i)}
+              <AnimatePresence>
+                {attachedFiles.map((file, i) => (
+                  <motion.span
+                    key={i}
+                    className={`mp-attachment-chip chip-${file.type}`}
+                    initial={{ opacity: 0, scale: 0.8, y: -4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    whileHover={{ scale: 1.03 }}
                   >
-                    ×
-                  </button>
-                </span>
-              ))}
+                    <motion.span
+                      className={`mp-icon-badge mp-attach-icon-badge badge-${file.type}`}
+                      whileHover={{ scale: 1.25, rotate: 10 }}
+                    >
+                      {file.type === "image"
+                        ? "🖼️"
+                        : file.type === "pdf"
+                        ? "📄"
+                        : "🎬"}
+                    </motion.span>
+                    <span className="mp-attach-filename">{file.name}</span>
+                    <button
+                      className="mp-attachment-remove"
+                      onClick={() => removeFile(i)}
+                      title="Remove attachment"
+                    >
+                      ×
+                    </button>
+                  </motion.span>
+                ))}
+              </AnimatePresence>
             </div>
           )}
 
           {/* Link Input */}
-          {showLinkInput && (
-            <div className="mp-link-section">
-              <div className="mp-link-input-wrap">
-                <span className="mp-link-icon">🔗</span>
-                <input
-                  className="mp-link-input"
-                  type="url"
-                  placeholder="Paste a URL here..."
-                  value={linkValue}
-                  onChange={(e) => setLinkValue(e.target.value)}
-                  autoFocus
-                />
-                <button
-                  className="mp-link-close"
-                  onClick={() => {
-                    setShowLinkInput(false);
-                    setLinkValue("");
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-          )}
+          <AnimatePresence>
+            {showLinkInput && (
+              <motion.div
+                className="mp-link-section"
+                initial={{ opacity: 0, y: -8, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: "auto" }}
+                exit={{ opacity: 0, y: -8, height: 0 }}
+                transition={{ duration: 0.25 }}
+              >
+                <div className="mp-link-input-wrap">
+                  <motion.span
+                    className="mp-icon-badge mp-link-icon-badge"
+                    whileHover={{ scale: 1.25, rotate: 15 }}
+                  >
+                    🔗
+                  </motion.span>
+                  <input
+                    className="mp-link-input"
+                    type="url"
+                    placeholder="Paste a reference URL here..."
+                    value={linkValue}
+                    onChange={(e) => setLinkValue(e.target.value)}
+                    autoFocus
+                  />
+                  <button
+                    className="mp-link-close"
+                    onClick={() => {
+                      setShowLinkInput(false);
+                      setLinkValue("");
+                    }}
+                    title="Close link input"
+                  >
+                    ×
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Hidden file inputs */}
           <input
@@ -1121,78 +539,176 @@ export default function MainPage() {
             onChange={(e) => handleFileAttach(e, "video")}
           />
 
-          {/* Toolbar */}
+          {/* Toolbar with Motion-Animated Dark-Shaded Icon Badges */}
           <div className="mp-toolbar">
             <div className="mp-toolbar-left">
-              <button
-                className="mp-tool-btn"
+              <motion.button
+                className="mp-tool-btn tool-image"
                 onClick={() => imageInputRef.current?.click()}
+                title="Upload image for Florence-2 Vision & OCR"
+                whileHover={{ y: -2, scale: 1.02 }}
+                whileTap={{ scale: 0.96 }}
               >
-                <span className="mp-tool-icon">🖼️</span>
-                Image
-              </button>
-              <button
-                className="mp-tool-btn"
+                <motion.span
+                  className="mp-icon-badge mp-tool-icon-badge"
+                  whileHover={{
+                    scale: 1.3,
+                    rotate: [0, -12, 10, -6, 0],
+                    transition: { duration: 0.35, ease: "easeInOut" },
+                  }}
+                  whileTap={{ scale: 0.88 }}
+                >
+                  🖼️
+                </motion.span>
+                <span>Image</span>
+              </motion.button>
+
+              <motion.button
+                className="mp-tool-btn tool-pdf"
                 onClick={() => pdfInputRef.current?.click()}
+                title="Attach PDF document"
+                whileHover={{ y: -2, scale: 1.02 }}
+                whileTap={{ scale: 0.96 }}
               >
-                <span className="mp-tool-icon">📄</span>
-                PDF
-              </button>
-              <button
-                className="mp-tool-btn"
+                <motion.span
+                  className="mp-icon-badge mp-tool-icon-badge"
+                  whileHover={{
+                    scale: 1.3,
+                    rotate: [0, -12, 10, -6, 0],
+                    transition: { duration: 0.35, ease: "easeInOut" },
+                  }}
+                  whileTap={{ scale: 0.88 }}
+                >
+                  📄
+                </motion.span>
+                <span>PDF</span>
+              </motion.button>
+
+              <motion.button
+                className="mp-tool-btn tool-video"
                 onClick={() => videoInputRef.current?.click()}
+                title="Attach video file"
+                whileHover={{ y: -2, scale: 1.02 }}
+                whileTap={{ scale: 0.96 }}
               >
-                <span className="mp-tool-icon">🎬</span>
-                Video
-              </button>
+                <motion.span
+                  className="mp-icon-badge mp-tool-icon-badge"
+                  whileHover={{
+                    scale: 1.3,
+                    rotate: [0, -12, 10, -6, 0],
+                    transition: { duration: 0.35, ease: "easeInOut" },
+                  }}
+                  whileTap={{ scale: 0.88 }}
+                >
+                  🎬
+                </motion.span>
+                <span>Video</span>
+              </motion.button>
 
               <div
                 style={{
                   width: "1px",
-                  height: "20px",
-                  background: "rgba(255,255,255,0.06)",
+                  height: "22px",
+                  background: "rgba(255,255,255,0.08)",
                   margin: "0 4px",
                 }}
               />
 
-              <button
-                className={`mp-tool-btn ${showLinkInput ? "active" : ""}`}
+              <motion.button
+                className={`mp-tool-btn tool-link ${showLinkInput ? "active" : ""}`}
                 onClick={() => setShowLinkInput(!showLinkInput)}
+                title="Add reference link"
+                whileHover={{ y: -2, scale: 1.02 }}
+                whileTap={{ scale: 0.96 }}
               >
-                <span className="mp-tool-icon">🔗</span>
-                Link
-              </button>
+                <motion.span
+                  className="mp-icon-badge mp-tool-icon-badge"
+                  whileHover={{
+                    scale: 1.3,
+                    rotate: [0, -12, 10, -6, 0],
+                    transition: { duration: 0.35, ease: "easeInOut" },
+                  }}
+                  whileTap={{ scale: 0.88 }}
+                >
+                  🔗
+                </motion.span>
+                <span>Link</span>
+              </motion.button>
 
-              <button
+              <motion.button
                 className={`mp-audio-btn ${isRecording ? "recording" : ""}`}
                 onClick={toggleRecording}
+                title="Voice input"
+                whileHover={{ y: -2, scale: 1.02 }}
+                whileTap={{ scale: 0.96 }}
               >
                 {isRecording ? (
                   <>
                     <span className="mp-recording-dot" />
-                    Recording...
+                    <span>Recording...</span>
                   </>
                 ) : (
                   <>
-                    <span className="mp-tool-icon">🎙️</span>
-                    Audio
+                    <motion.span
+                      className="mp-icon-badge mp-tool-icon-badge"
+                      whileHover={{
+                        scale: 1.3,
+                        rotate: [0, -12, 10, -6, 0],
+                        transition: { duration: 0.35, ease: "easeInOut" },
+                      }}
+                      whileTap={{ scale: 0.88 }}
+                    >
+                      🎙️
+                    </motion.span>
+                    <span>Audio</span>
                   </>
                 )}
-              </button>
+              </motion.button>
             </div>
 
-            <button
+            <motion.button
               className="mp-submit-btn"
               disabled={isLoading || (attachedFiles.length === 0 && prompt.trim().length === 0)}
-              title="Generate"
+              title="Generate with GenAI"
               onClick={handleSubmit}
+              whileHover={{ scale: 1.14, y: -2 }}
+              whileTap={{ scale: 0.92 }}
             >
               {isLoading ? "⏳" : "➜"}
-            </button>
+            </motion.button>
           </div>
         </div>
 
-        {/* ── Bubble-Type Selector Bar ── */}
+        {/* ── Quick Prompt Inspiration Chips with Motion ── */}
+        <div className="mp-quick-prompts">
+          <span style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.4)", marginRight: "4px" }}>
+            Try Quick Prompt:
+          </span>
+          {quickChips.map((chip, idx) => (
+            <motion.button
+              key={idx}
+              className="mp-quick-chip"
+              onClick={() => setPrompt(chip.text)}
+              whileHover={{ y: -3, scale: 1.04 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            >
+              <motion.span
+                className={`mp-icon-badge mp-quick-icon-badge badge-${chip.theme}`}
+                whileHover={{
+                  scale: 1.35,
+                  rotate: [0, -15, 15, -8, 0],
+                  transition: { duration: 0.4, ease: "easeInOut" },
+                }}
+              >
+                {chip.icon}
+              </motion.span>
+              <span>{chip.label}</span>
+            </motion.button>
+          ))}
+        </div>
+
+        {/* ── Bubble-Type Selector Bar with Dedicated Dark Badges & Motion ── */}
         <div className="mp-selectors-bar">
           {(Object.keys(SELECTOR_DATA) as SelectorKey[]).map((key) => {
             const data = SELECTOR_DATA[key];
@@ -1201,166 +717,246 @@ export default function MainPage() {
 
             return (
               <div key={key} style={{ position: "relative" }}>
-                <button
+                <motion.button
                   className={`mp-selector-trigger ${isOpen ? "active" : ""} ${
                     selectedValue ? "has-value" : ""
                   }`}
                   onClick={() => toggleSelector(key)}
+                  whileHover={{ y: -2, scale: 1.02 }}
+                  whileTap={{ scale: 0.96 }}
                 >
-                  <span style={{ fontSize: "14px" }}>{data.icon}</span>
-                  {data.label}
+                  <motion.span
+                    className={`mp-icon-badge mp-selector-icon-badge badge-${data.theme}`}
+                    whileHover={{
+                      scale: 1.32,
+                      rotate: [0, -14, 12, -4, 0],
+                      transition: { duration: 0.35, ease: "easeInOut" },
+                    }}
+                    whileTap={{ scale: 0.88 }}
+                  >
+                    {data.icon}
+                  </motion.span>
+                  <span>{data.label}</span>
                   {selectedValue && (
                     <span className="mp-selector-value">{selectedValue}</span>
                   )}
                   <span className="mp-selector-chevron">▼</span>
-                </button>
+                </motion.button>
 
-                {/* Popup Dropdown */}
-                {isOpen && (
-                  <>
-                    <div
-                      className="mp-popup-overlay"
-                      onClick={() => setOpenSelector(null)}
-                    />
-                    <div className="mp-popup">
-                      <div className="mp-popup-title">{data.label}</div>
-                      {data.options.map((option) => (
-                        <button
-                          key={option}
-                          className={`mp-popup-option ${
-                            selectedValue === option ? "selected" : ""
-                          }`}
-                          onClick={() => {
-                            selectOption(key, option);
-                            setOpenSelector(null);
-                          }}
-                        >
-                          <span className="mp-popup-option-dot" />
-                          {option}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
+                {/* Popup Dropdown with AnimatePresence */}
+                <AnimatePresence>
+                  {isOpen && (
+                    <>
+                      <div
+                        className="mp-popup-overlay"
+                        onClick={() => setOpenSelector(null)}
+                      />
+                      <motion.div
+                        className="mp-popup"
+                        initial={{ opacity: 0, scale: 0.92, y: 10, x: "-50%" }}
+                        animate={{ opacity: 1, scale: 1, y: 0, x: "-50%" }}
+                        exit={{ opacity: 0, scale: 0.92, y: 8, x: "-50%" }}
+                        transition={{ type: "spring", stiffness: 450, damping: 25 }}
+                      >
+                        <div className="mp-popup-title">{data.label}</div>
+                        {data.options.map((option) => (
+                          <motion.button
+                            key={option}
+                            className={`mp-popup-option ${
+                              selectedValue === option ? "selected" : ""
+                            }`}
+                            onClick={() => {
+                              selectOption(key, option);
+                              setOpenSelector(null);
+                            }}
+                            whileHover={{ x: 4 }}
+                            whileTap={{ scale: 0.97 }}
+                          >
+                            <span className="mp-popup-option-dot" />
+                            {option}
+                          </motion.button>
+                        ))}
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
               </div>
             );
           })}
         </div>
 
         {/* ── Error Message ── */}
-        {error && (
-          <div style={{
-            marginTop: 20,
-            padding: "14px 20px",
-            borderRadius: 12,
-            background: "rgba(255, 80, 80, 0.1)",
-            border: "1px solid rgba(255, 80, 80, 0.2)",
-            color: "#ff8a8a",
-            fontSize: 13,
-            width: "100%",
-          }}>
-            ⚠️ {error}
-          </div>
-        )}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              style={{
+                marginTop: 24,
+                padding: "16px 22px",
+                borderRadius: 14,
+                background: "linear-gradient(135deg, rgba(255, 60, 60, 0.15) 0%, rgba(220, 38, 38, 0.08) 100%)",
+                border: "1px solid rgba(255, 80, 80, 0.3)",
+                color: "#fca5a5",
+                fontSize: 13.5,
+                width: "100%",
+                boxShadow: "0 8px 24px rgba(255, 60, 60, 0.1)",
+              }}
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+            >
+              ⚠️ {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ── Loading Indicator ── */}
-        {isLoading && (
-          <div style={{
-            marginTop: 24,
-            textAlign: "center",
-            color: "rgba(0, 200, 150, 0.7)",
-            fontSize: 14,
-          }}>
-            <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>⏳</span>
-             {" "}Processing through pipeline...
+        <AnimatePresence>
+          {isLoading && (
+            <motion.div
+              style={{
+                marginTop: 32,
+                textAlign: "center",
+                color: "#00f5a0",
+                fontSize: 15,
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "10px",
+              }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+            >
+              <span style={{ display: "inline-block", animation: "spin 1s linear infinite", fontSize: "18px" }}>⏳</span>
+              <span>Synthesizing multimodal pipeline...</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          </div>
-        )}
-
-        {/* ── Response Display ── */}
-        {response && (
-          <div style={{
-            marginTop: 24,
-            width: "100%",
-            background: "rgba(10, 20, 18, 0.85)",
-            border: "1px solid rgba(0, 200, 150, 0.12)",
-            borderRadius: 16,
-            padding: 24,
-            backdropFilter: "blur(40px)",
-          }}>
-            <h3 style={{
-              fontSize: 16,
-              fontWeight: 600,
-              color: "#00c896",
-              marginBottom: 16,
-            }}>Pipeline Result</h3>
-
-            {/* Final Output */}
-<<<<<<< HEAD
-            {Boolean(response.final_output) && (
-=======
-            {!!response.final_output && (
->>>>>>> cd04194944c3c253701ad571a5115640423c06cb
-              <div style={{ marginBottom: 20 }}>
-                <h4 style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>Final Output</h4>
-                <div style={{ fontSize: 14, lineHeight: 1.7, color: "#d4e8e2", whiteSpace: "pre-wrap" }}>
-                  {String(response.final_output)}
+        {/* ── Response Display with Motion ── */}
+        <AnimatePresence>
+          {response && (
+            <motion.div
+              className="mp-result-container"
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 16 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            >
+              <div className="mp-result-header">
+                <div className="mp-result-title-wrap">
+                  <motion.span
+                    className="mp-icon-badge badge-final"
+                    style={{ width: "28px", height: "28px", fontSize: "15px" }}
+                    whileHover={{ scale: 1.25, rotate: 15 }}
+                  >
+                    ⚡
+                  </motion.span>
+                  <span className="mp-result-title">Pipeline Output</span>
+                  <span className="mp-result-badge">AI Generated</span>
                 </div>
-              </div>
-            )}
-
-            {/* Image Analysis */}
-<<<<<<< HEAD
-            {Boolean(response.image_analysis) && (
-=======
-            {!!response.image_analysis && (
->>>>>>> cd04194944c3c253701ad571a5115640423c06cb
-              <div style={{ marginBottom: 20 }}>
-                <h4 style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>Image Analysis</h4>
-                <p style={{ fontSize: 13, color: "#a0d4c4", lineHeight: 1.6 }}>
-                  {String((response.image_analysis as Record<string, unknown>).image_description || "")}
-                </p>
-<<<<<<< HEAD
-                {Boolean((response.image_analysis as Record<string, unknown>).ocr_text) && (
-=======
-                {!!(response.image_analysis as Record<string, unknown>).ocr_text && (
->>>>>>> cd04194944c3c253701ad571a5115640423c06cb
-                  <p style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 8 }}>
-                    <strong>OCR:</strong> {String((response.image_analysis as Record<string, unknown>).ocr_text)}
-                  </p>
+                {Boolean(response.final_output) && (
+                  <motion.button
+                    className="mp-copy-btn"
+                    onClick={() => handleCopy(String(response.final_output))}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {copied ? "✓ Copied!" : "📋 Copy Output"}
+                  </motion.button>
                 )}
               </div>
-            )}
 
-            {/* Gemini Output */}
-<<<<<<< HEAD
-            {Boolean(response.gemini_output) && (
-=======
-            {!!response.gemini_output && (
->>>>>>> cd04194944c3c253701ad571a5115640423c06cb
-              <details style={{ marginBottom: 12 }}>
-                <summary style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", cursor: "pointer", textTransform: "uppercase", letterSpacing: 1.5 }}>Gemini Raw Output</summary>
-                <div style={{ fontSize: 13, color: "#7dd4b8", marginTop: 8, whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
-                  {String(response.gemini_output)}
+              {/* Final Output */}
+              {Boolean(response.final_output) && (
+                <div className="mp-result-section">
+                  <div className="mp-section-tag">
+                    <motion.span
+                      className="mp-icon-badge mp-tag-icon-badge badge-final"
+                      whileHover={{ scale: 1.3, rotate: 12 }}
+                    >
+                      🎯
+                    </motion.span>
+                    <span>Final Polished Content</span>
+                  </div>
+                  <div className="mp-final-box">
+                    {String(response.final_output)}
+                  </div>
                 </div>
-              </details>
-            )}
+              )}
 
-            {/* Compressed Data */}
-<<<<<<< HEAD
-            {Boolean(response.compressed_data) && (
-=======
-            {!!response.compressed_data && (
->>>>>>> cd04194944c3c253701ad571a5115640423c06cb
-              <details>
-                <summary style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", cursor: "pointer", textTransform: "uppercase", letterSpacing: 1.5 }}>Compressed Data (JSON)</summary>
-                <pre style={{ fontSize: 11, color: "#7dd4b8", marginTop: 8, overflow: "auto", maxHeight: 300, background: "rgba(0,0,0,0.3)", padding: 12, borderRadius: 8 }}>
-                  {JSON.stringify(response.compressed_data, null, 2)}
-                </pre>
-              </details>
-            )}
-          </div>
-        )}
+              {/* Image Analysis */}
+              {Boolean(response.image_analysis) && (
+                <div className="mp-result-section">
+                  <div className="mp-section-tag">
+                    <motion.span
+                      className="mp-icon-badge mp-tag-icon-badge badge-vision"
+                      whileHover={{ scale: 1.3, rotate: 12 }}
+                    >
+                      🖼️
+                    </motion.span>
+                    <span>Vision & OCR Breakdown</span>
+                  </div>
+                  <div className="mp-vision-box">
+                    {String((response.image_analysis as Record<string, unknown>).image_description || "")}
+                  </div>
+                  {Boolean((response.image_analysis as Record<string, unknown>).ocr_text) && (
+                    <div className="mp-ocr-box">
+                      <strong>Extracted Text (OCR):</strong> {String((response.image_analysis as Record<string, unknown>).ocr_text)}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Gemini Output */}
+              {Boolean(response.gemini_output) && (
+                <details className="mp-details-toggle">
+                  <summary className="mp-details-summary">
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <motion.span
+                        className="mp-icon-badge badge-audience"
+                        style={{ width: "20px", height: "20px", fontSize: "11px" }}
+                        whileHover={{ scale: 1.3, rotate: 12 }}
+                      >
+                        🧠
+                      </motion.span>
+                      <span>Gemini Model Output</span>
+                    </div>
+                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>Click to expand ▼</span>
+                  </summary>
+                  <div className="mp-details-content">
+                    {String(response.gemini_output)}
+                  </div>
+                </details>
+              )}
+
+              {/* Compressed Data */}
+              {Boolean(response.compressed_data) && (
+                <details className="mp-details-toggle">
+                  <summary className="mp-details-summary">
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <motion.span
+                        className="mp-icon-badge badge-brief"
+                        style={{ width: "20px", height: "20px", fontSize: "11px" }}
+                        whileHover={{ scale: 1.3, rotate: 12 }}
+                      >
+                        📦
+                      </motion.span>
+                      <span>Compressed Knowledge Schema (JSON)</span>
+                    </div>
+                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>Click to expand ▼</span>
+                  </summary>
+                  <div className="mp-details-content">
+                    <pre className="mp-json-box">
+                      {JSON.stringify(response.compressed_data, null, 2)}
+                    </pre>
+                  </div>
+                </details>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
     </div>
   );

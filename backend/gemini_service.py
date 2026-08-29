@@ -14,12 +14,19 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ---------------------------------------------------------------------------
-# Gemini client (initialised at import time)
+# Gemini client (lazy singleton)
 # ---------------------------------------------------------------------------
 
-_client = genai.Client(
-    api_key=os.getenv("GEMINI_API_KEY"),
-)
+_client = None
+
+
+def _get_client():
+    global _client
+    if _client is None:
+        api_key = os.getenv("GEMINI_API_KEY")
+        _client = genai.Client(api_key=api_key) if api_key else genai.Client()
+    return _client
+
 
 GEMINI_MODEL = "gemini-2.5-flash"
 
@@ -70,7 +77,8 @@ Generate a comprehensive analysis based on the structured data above. Be concise
 
     print("[gemini_service] Sending compressed JSON to Gemini ...")
 
-    response = _client.models.generate_content(
+    client = _get_client()
+    response = client.models.generate_content(
         model=GEMINI_MODEL,
         contents=prompt,
     )

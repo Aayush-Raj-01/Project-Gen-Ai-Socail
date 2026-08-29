@@ -20,6 +20,23 @@ from pydantic import BaseModel
 
 from workflow import process_image, process_prompt, ContentViolationError
 
+from contextlib import asynccontextmanager
+
+# ---------------------------------------------------------------------------
+# Upload directory
+# ---------------------------------------------------------------------------
+
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Ensure upload directory exists when server starts."""
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    print(f"[app] Upload directory ready: {UPLOAD_DIR}")
+    yield
+
+
 # ---------------------------------------------------------------------------
 # App setup
 # ---------------------------------------------------------------------------
@@ -28,6 +45,7 @@ app = FastAPI(
     title="Project Gen AI Social",
     description="AI-powered content transformation platform",
     version="2.0.0",
+    lifespan=lifespan,
 )
 
 # CORS — allow all origins for development
@@ -38,19 +56,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# ---------------------------------------------------------------------------
-# Upload directory
-# ---------------------------------------------------------------------------
-
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Ensure upload directory exists when server starts."""
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-    print(f"[app] Upload directory ready: {UPLOAD_DIR}")
 
 
 # ---------------------------------------------------------------------------
