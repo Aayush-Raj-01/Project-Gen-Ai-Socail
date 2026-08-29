@@ -291,13 +291,15 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 10px 4px 6px;
-  border-radius: 6px;
+  padding: 5px 12px 5px 6px;
+  border-radius: 8px;
   font-size: 12px;
-  font-weight: 500;
-  background: #060b0c;
-  border: 1px solid rgba(57, 180, 154, 0.2);
+  font-weight: 600;
+  background: #020506;
+  border: 1px solid rgba(57, 180, 154, 0.25);
   color: var(--text-white);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  letter-spacing: 0.1px;
 }
 
 .mp-attachment-chip.chip-image {
@@ -313,24 +315,24 @@
 }
 
 .mp-attach-icon-badge {
-  width: 20px;
-  height: 20px;
-  border-radius: 5px;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
   font-size: 11px;
 }
 
 .mp-attach-icon-badge.badge-image {
-  background: #0c2321;
+  background: #061211;
   border: 1px solid rgba(57, 180, 154, 0.3);
 }
 
 .mp-attach-icon-badge.badge-pdf {
-  background: #082244;
+  background: #04101e;
   border: 1px solid rgba(56, 189, 248, 0.3);
 }
 
 .mp-attach-icon-badge.badge-video {
-  background: #270e54;
+  background: #110624;
   border: 1px solid rgba(192, 132, 252, 0.3);
 }
 
@@ -573,61 +575,66 @@
   justify-content: center;
   gap: 8px;
   flex-wrap: wrap;
-  margin-top: 16px;
+  margin-top: 18px;
 }
 
 .mp-quick-chip {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 5px 12px 5px 6px;
-  border-radius: 9999px;
+  gap: 8px;
+  padding: 6px 14px 6px 7px;
+  border-radius: 10px;
   font-size: 12px;
-  font-weight: 500;
-  background: rgba(12, 35, 33, 0.4);
-  border: 1px solid rgba(57, 180, 154, 0.15);
-  color: var(--text-gray-teal);
+  font-weight: 600;
+  background: #030607;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #b0c2c0;
   cursor: pointer;
-  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.1px;
 }
 
 .mp-quick-icon-badge {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 11.5px;
+  background: #091213;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .badge-launch {
-  background: #381307;
-  border: 1px solid rgba(251, 146, 60, 0.3);
+  background: #140803;
+  border: 1px solid rgba(251, 146, 60, 0.25);
 }
 
 .badge-linkedin {
-  background: #062644;
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: #03101c;
+  border: 1px solid rgba(56, 189, 248, 0.25);
 }
 
 .badge-carousel {
-  background: #3d0340;
-  border: 1px solid rgba(232, 121, 249, 0.3);
+  background: #170318;
+  border: 1px solid rgba(232, 121, 249, 0.25);
 }
 
 .badge-brief {
-  background: #0c2321;
-  border: 1px solid rgba(57, 180, 154, 0.3);
+  background: #061211;
+  border: 1px solid rgba(57, 180, 154, 0.25);
 }
 
 .mp-quick-chip:hover {
-  color: var(--text-white);
-  background: rgba(12, 35, 33, 0.8);
-  border-color: rgba(57, 180, 154, 0.4);
+  color: #ffffff;
+  background: #000000;
+  border-color: rgba(57, 180, 154, 0.45);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(57, 180, 154, 0.2);
 }
 
 /* ── Selectors Bar ── */
 .mp-selectors-bar {
   width: 100%;
-  margin-top: 20px;
+  margin-top: 22px;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -637,18 +644,20 @@
 .mp-selector-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 5px 14px 5px 6px;
-  border-radius: 9999px;
+  gap: 8px;
+  padding: 6px 14px 6px 7px;
+  border-radius: 10px;
   font-size: 12.5px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  border: 1px solid rgba(57, 180, 154, 0.15);
-  background: rgba(12, 35, 33, 0.4);
-  color: var(--text-gray-teal);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #030607;
+  color: #b0c2c0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
   position: relative;
   user-select: none;
+  letter-spacing: 0.1px;
 }
 
 .mp-selector-icon-badge {
@@ -659,56 +668,58 @@
 }
 
 .badge-audience {
-  background: #092347;
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  background: #04101e;
+  border: 1px solid rgba(56, 189, 248, 0.2);
 }
 
 .badge-tone {
-  background: #2b0b4a;
-  border: 1px solid rgba(168, 85, 247, 0.25);
+  background: #11051e;
+  border: 1px solid rgba(168, 85, 247, 0.2);
 }
 
 .badge-language {
-  background: #0c2321;
-  border: 1px solid rgba(57, 180, 154, 0.25);
+  background: #061211;
+  border: 1px solid rgba(57, 180, 154, 0.2);
 }
 
 .badge-detail {
-  background: #381a04;
-  border: 1px solid rgba(251, 191, 36, 0.25);
+  background: #160a02;
+  border: 1px solid rgba(251, 191, 36, 0.2);
 }
 
 .badge-objective {
-  background: #3d0514;
-  border: 1px solid rgba(244, 63, 94, 0.25);
+  background: #180308;
+  border: 1px solid rgba(244, 63, 94, 0.2);
 }
 
 .badge-style {
-  background: #17153b;
-  border: 1px solid rgba(129, 140, 248, 0.25);
+  background: #080718;
+  border: 1px solid rgba(129, 140, 248, 0.2);
 }
 
 .mp-selector-trigger:hover {
-  border-color: rgba(57, 180, 154, 0.35);
-  color: var(--text-white);
-  background: rgba(12, 35, 33, 0.7);
+  border-color: rgba(57, 180, 154, 0.4);
+  color: #ffffff;
+  background: #000000;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8);
 }
 
 .mp-selector-trigger.active,
 .mp-selector-trigger.has-value {
-  border-color: var(--accent-teal);
-  background: rgba(12, 35, 33, 0.85);
-  color: var(--text-white);
+  border-color: #39b49a;
+  background: #000000;
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(57, 180, 154, 0.25);
 }
 
 .mp-selector-value {
   font-size: 11px;
-  font-weight: 600;
-  color: var(--accent-teal);
-  background: rgba(57, 180, 154, 0.15);
+  font-weight: 700;
+  color: #39b49a;
+  background: rgba(57, 180, 154, 0.12);
   border: 1px solid rgba(57, 180, 154, 0.3);
-  padding: 1px 7px;
-  border-radius: 9999px;
+  padding: 2px 8px;
+  border-radius: 6px;
 }
 
 .mp-selector-chevron {

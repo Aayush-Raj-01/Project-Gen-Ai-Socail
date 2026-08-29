@@ -680,8 +680,8 @@ export default function MainPage() {
 
         {/* ── Quick Prompt Inspiration Chips with Motion ── */}
         <div className="mp-quick-prompts">
-          <span style={{ fontSize: "11.5px", color: "#90a4a2", marginRight: "4px" }}>
-            Try Quick Prompt:
+          <span style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.6px", textTransform: "uppercase", color: "#90a4a2", marginRight: "6px" }}>
+            Suggested:
           </span>
           {quickChips.map((chip, idx) => (
             <motion.button
