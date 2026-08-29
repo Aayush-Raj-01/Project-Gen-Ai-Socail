@@ -608,10 +608,13 @@ export default function MainPage() {
         {/* Soft Radial Glow for depth behind Hero Section */}
         <div className="mp-hero-radial-glow" />
 
-        <h1 className="mp-title">
-          Craft your content with a touch of{" "}
-          <span className="mp-title-highlight">intelligence</span>
-        </h1>
+        <div className="mp-title-wrap">
+          <div className="mp-title-backdrop-glow" aria-hidden="true" />
+          <h1 className="mp-title">
+            Craft your content with a touch of{" "}
+            <span className="mp-title-highlight">intelligence</span>
+          </h1>
+        </div>
 
         {/* ── Prompt Card ── */}
         <div className="mp-prompt-card">
