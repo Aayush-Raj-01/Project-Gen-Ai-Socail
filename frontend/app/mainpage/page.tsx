@@ -1,6 +1,9 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import Link from "next/link";
+import { SearchBar, type SearchResultItem } from "../components/SearchBar";
+import { NavyButton } from "../components/NavyButton";
 
 /* ────────────────────────────────────────────
    Data for the bubble-type popup selectors
@@ -93,6 +96,25 @@ export default function MainPage() {
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
+  // Sync URL search params on mount from landing page
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get("q");
+      const item = params.get("item");
+      const cat = params.get("cat");
+      if (q) {
+        setPrompt(`Create high-impact social content for: ${q}`);
+      } else if (item) {
+        if (cat === "Templates") {
+          setPrompt(`Create a ${item} focusing on: `);
+        } else {
+          setPrompt(`Work with ${item}: `);
+        }
+      }
+    }
+  }, []);
+
   // ── Handlers ──
   const handleFileAttach = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>, type: string) => {
@@ -129,6 +151,36 @@ export default function MainPage() {
 
   const toggleRecording = useCallback(() => {
     setIsRecording((prev) => !prev);
+  }, []);
+
+  const handleSearchResultSelect = useCallback((item: SearchResultItem) => {
+    if (item.category === "Templates") {
+      setPrompt((prev) =>
+        prev
+          ? `${prev}\n\n[Template: ${item.title}]`
+          : `Create a ${item.title} focusing on: `
+      );
+    } else if (item.id === "sel-tone-prof") {
+      setSelections((prev) => ({ ...prev, tone: "Professional" }));
+    } else if (item.id === "sel-tone-casual") {
+      setSelections((prev) => ({ ...prev, tone: "Casual" }));
+    } else if (item.id === "sel-audience-student") {
+      setSelections((prev) => ({ ...prev, targetAudience: "Student" }));
+    } else if (item.id === "sel-audience-exec") {
+      setSelections((prev) => ({ ...prev, targetAudience: "Executive" }));
+    } else if (item.id === "sel-audience-tech") {
+      setSelections((prev) => ({ ...prev, targetAudience: "Technical Team" }));
+    } else if (item.id === "tool-img") {
+      imageInputRef.current?.click();
+    } else if (item.id === "tool-ocr") {
+      pdfInputRef.current?.click();
+    } else if (item.id === "tool-voice") {
+      setIsRecording(true);
+    }
+  }, []);
+
+  const handleSearchSubmit = useCallback((query: string) => {
+    console.log("Search query submitted:", query);
   }, []);
 
   const handleSubmit = useCallback(async () => {
@@ -211,12 +263,18 @@ export default function MainPage() {
         .mp-header {
           width: 100%;
           max-width: 1200px;
-          padding: 24px 40px;
+          padding: 20px 36px;
           display: flex;
           align-items: center;
           justify-content: space-between;
+          gap: 20px;
           position: relative;
-          z-index: 10;
+          z-index: 50;
+        }
+
+        .mp-header-search {
+          flex: 1 1 360px;
+          max-width: 440px;
         }
 
         .mp-logo {
@@ -768,6 +826,19 @@ export default function MainPage() {
         @media (max-width: 768px) {
           .mp-header {
             padding: 16px 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+          }
+
+          .mp-header-search {
+            order: 3;
+            width: 100%;
+            max-width: 100%;
+            min-width: 100%;
+          }
+
+          .mp-header-actions {
+            margin-left: auto;
           }
 
           .mp-content {
@@ -824,11 +895,25 @@ export default function MainPage() {
 
       {/* ── Header ── */}
       <header className="mp-header">
-        <div style={{ display: "flex", alignItems: "baseline" }}>
+        <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "baseline", flexShrink: 0 }}>
           <span className="mp-logo">GenAI Social</span>
           <span className="mp-logo-sub">Studio</span>
-        </div>
+        </Link>
+
+        {/* ── Search Bar ── */}
+        <SearchBar
+          placeholder="Search here..."
+          onSelectResult={handleSearchResultSelect}
+          onSearchSubmit={handleSearchSubmit}
+          className="mp-header-search"
+        />
+
         <div className="mp-header-actions">
+          <Link href="/">
+            <NavyButton variant="ghost" size="sm">
+              ← Landing
+            </NavyButton>
+          </Link>
           <button className="mp-header-btn">History</button>
           <button className="mp-header-btn">Settings</button>
         </div>
@@ -1105,7 +1190,7 @@ export default function MainPage() {
             }}>Pipeline Result</h3>
 
             {/* Final Output */}
-            {response.final_output && (
+            {Boolean(response.final_output) && (
               <div style={{ marginBottom: 20 }}>
                 <h4 style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>Final Output</h4>
                 <div style={{ fontSize: 14, lineHeight: 1.7, color: "#d4e8e2", whiteSpace: "pre-wrap" }}>
@@ -1115,13 +1200,13 @@ export default function MainPage() {
             )}
 
             {/* Image Analysis */}
-            {response.image_analysis && (
+            {Boolean(response.image_analysis) && (
               <div style={{ marginBottom: 20 }}>
                 <h4 style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>Image Analysis</h4>
                 <p style={{ fontSize: 13, color: "#a0d4c4", lineHeight: 1.6 }}>
                   {String((response.image_analysis as Record<string, unknown>).image_description || "")}
                 </p>
-                {(response.image_analysis as Record<string, unknown>).ocr_text && (
+                {Boolean((response.image_analysis as Record<string, unknown>).ocr_text) && (
                   <p style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 8 }}>
                     <strong>OCR:</strong> {String((response.image_analysis as Record<string, unknown>).ocr_text)}
                   </p>
@@ -1130,7 +1215,7 @@ export default function MainPage() {
             )}
 
             {/* Gemini Output */}
-            {response.gemini_output && (
+            {Boolean(response.gemini_output) && (
               <details style={{ marginBottom: 12 }}>
                 <summary style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", cursor: "pointer", textTransform: "uppercase", letterSpacing: 1.5 }}>Gemini Raw Output</summary>
                 <div style={{ fontSize: 13, color: "#7dd4b8", marginTop: 8, whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
@@ -1140,7 +1225,7 @@ export default function MainPage() {
             )}
 
             {/* Compressed Data */}
-            {response.compressed_data && (
+            {Boolean(response.compressed_data) && (
               <details>
                 <summary style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", cursor: "pointer", textTransform: "uppercase", letterSpacing: 1.5 }}>Compressed Data (JSON)</summary>
                 <pre style={{ fontSize: 11, color: "#7dd4b8", marginTop: 8, overflow: "auto", maxHeight: 300, background: "rgba(0,0,0,0.3)", padding: 12, borderRadius: 8 }}>
