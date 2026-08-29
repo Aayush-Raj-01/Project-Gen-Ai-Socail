@@ -112,6 +112,7 @@ export default function MainPage() {
   const [response, setResponse] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [moderationWarning, setModerationWarning] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // File input refs
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -140,9 +141,9 @@ export default function MainPage() {
 
   const toggleSelector = useCallback(
     (key: SelectorKey) => {
-      setOpenSelector(openSelector === key ? null : key);
+      setOpenSelector((prev) => (prev === key ? null : key));
     },
-    [openSelector]
+    []
   );
 
   const selectOption = useCallback((key: SelectorKey, option: string) => {
@@ -186,12 +187,25 @@ export default function MainPage() {
     console.log("Search query submitted:", query);
   }, []);
 
+  const handleCopy = useCallback((text: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, []);
+
   const handleSubmit = useCallback(async () => {
     const imageFile = attachedFiles.find((f) => f.type === "image");
+    const videoFile = attachedFiles.find((f) => f.type === "video");
+    const audioFile = attachedFiles.find((f) => f.type === "audio");
+    const pdfFile = attachedFiles.find((f) => f.type === "pdf");
     const hasPrompt = prompt.trim().length > 0;
 
-    if (!imageFile && !hasPrompt) {
-      setError("Please enter a prompt or attach an image.");
+    const fileToSend = imageFile || videoFile || audioFile || pdfFile;
+
+    if (!fileToSend && !hasPrompt) {
+      setError("Please enter a prompt or attach a file.");
       return;
     }
 
@@ -218,17 +232,21 @@ export default function MainPage() {
     try {
       let res: Response;
 
-      if (imageFile) {
-        // Image pipeline — send to /analyze-image
+      if (fileToSend) {
         const formData = new FormData();
-        formData.append("file", imageFile.file);
+        formData.append("file", fileToSend.file);
+        if (fullPrompt) formData.append("prompt", fullPrompt);
 
-        res = await fetch("http://localhost:8000/analyze-image", {
+        let endpoint = "http://localhost:8000/analyze-image";
+        if (fileToSend.type === "video") endpoint = "http://localhost:8000/analyze-video";
+        if (fileToSend.type === "audio") endpoint = "http://localhost:8000/analyze-audio";
+        if (fileToSend.type === "pdf") endpoint = "http://localhost:8000/analyze-pdf";
+
+        res = await fetch(endpoint, {
           method: "POST",
           body: formData,
         });
       } else {
-        // Text-only pipeline — send to /process-prompt
         res = await fetch("http://localhost:8000/process-prompt", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -238,13 +256,10 @@ export default function MainPage() {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => null);
-
-        // Check if this is a content moderation rejection
         if (res.status === 403 && errData?.detail?.type === "content_violation") {
           setModerationWarning(errData.detail.reason);
           return;
         }
-
         throw new Error(errData?.detail || `Server error: ${res.status}`);
       }
 
@@ -256,16 +271,6 @@ export default function MainPage() {
       setIsLoading(false);
     }
   }, [attachedFiles, prompt, selections, linkValue]);
-
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = (text: string) => {
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
 
   const quickChips = [
     { label: "Viral Launch", icon: "🚀", theme: "launch", text: "Create a high-impact product launch announcement for: " },
@@ -432,7 +437,7 @@ export default function MainPage() {
           <div className="mp-textarea-wrap">
             <textarea
               className="mp-textarea"
-              placeholder="Describe what you want to create or attach an image / document..."
+              placeholder="Describe what you want to create or attach an image / video / audio / document..."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               rows={4}
@@ -460,7 +465,9 @@ export default function MainPage() {
                         ? "🖼️"
                         : file.type === "pdf"
                         ? "📄"
-                        : "🎬"}
+                        : file.type === "video"
+                        ? "🎬"
+                        : "🎙️"}
                     </motion.span>
                     <span className="mp-attach-filename">{file.name}</span>
                     <button
@@ -906,6 +913,69 @@ export default function MainPage() {
                       <strong>Extracted Text (OCR):</strong> {String((response.image_analysis as Record<string, unknown>).ocr_text)}
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Video Analysis */}
+              {Boolean(response.video_analysis) && (
+                <div className="mp-result-section">
+                  <div className="mp-section-tag">
+                    <motion.span
+                      className="mp-icon-badge mp-tag-icon-badge badge-video"
+                      whileHover={{ scale: 1.3, rotate: 12 }}
+                    >
+                      🎬
+                    </motion.span>
+                    <span>Video Analysis</span>
+                  </div>
+                  <div className="mp-vision-box">
+                    <strong>Language:</strong> {String((response.video_analysis as Record<string, unknown>).language || "unknown")}
+                    <div style={{ marginTop: 8 }}>
+                      <strong>Transcription:</strong> {String((response.video_analysis as Record<string, unknown>).transcription || "None")}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Audio Analysis */}
+              {Boolean(response.audio_analysis) && (
+                <div className="mp-result-section">
+                  <div className="mp-section-tag">
+                    <motion.span
+                      className="mp-icon-badge mp-tool-icon-badge badge-audio"
+                      whileHover={{ scale: 1.3, rotate: 12 }}
+                    >
+                      🎙️
+                    </motion.span>
+                    <span>Audio Analysis</span>
+                  </div>
+                  <div className="mp-ocr-box">
+                    <strong>Language:</strong> {String((response.audio_analysis as Record<string, unknown>).language || "unknown")}
+                    <div style={{ marginTop: 8 }}>
+                      <strong>Transcription:</strong> {String((response.audio_analysis as Record<string, unknown>).transcription || "None")}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* PDF Analysis */}
+              {Boolean(response.pdf_analysis) && (
+                <div className="mp-result-section">
+                  <div className="mp-section-tag">
+                    <motion.span
+                      className="mp-icon-badge mp-tag-icon-badge badge-vision"
+                      whileHover={{ scale: 1.3, rotate: 12 }}
+                    >
+                      📄
+                    </motion.span>
+                    <span>PDF Analysis</span>
+                  </div>
+                  <div className="mp-vision-box">
+                    <strong>Pages:</strong> {String((response.pdf_analysis as Record<string, unknown>).page_count || 0)} | <strong>Method:</strong> {String((response.pdf_analysis as Record<string, unknown>).method || "unknown")}
+                    <div style={{ marginTop: 8 }}>
+                      <strong>Extracted Text:</strong> {String((response.pdf_analysis as Record<string, unknown>).extracted_text || "None")}
+                    </div>
+                  </div>
                 </div>
               )}
 
