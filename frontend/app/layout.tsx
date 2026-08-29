@@ -17,6 +17,7 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+import { Suspense } from "react";
 import ClientLayoutWrapper from "./components/client-wrapper";
 
 export const metadata: Metadata = {
@@ -34,13 +35,12 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} h-full antialiased`}
     >
-      <head>
-        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
-      </head>
       <body className="min-h-full flex flex-col bg-background text-on-surface">
-        <ClientLayoutWrapper>
-          {children}
-        </ClientLayoutWrapper>
+        <Suspense fallback={null}>
+          <ClientLayoutWrapper>
+            {children}
+          </ClientLayoutWrapper>
+        </Suspense>
       </body>
     </html>
   );
