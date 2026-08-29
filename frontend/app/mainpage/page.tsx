@@ -890,7 +890,7 @@ export default function MainPage() {
               style={{
                 marginTop: 32,
                 textAlign: "center",
-                color: "#39b49a",
+                color: "#2DD4BF",
                 fontSize: 15,
                 fontWeight: 600,
                 display: "flex",
@@ -1097,7 +1097,7 @@ export default function MainPage() {
                       </motion.span>
                       <span>Gemini Model Output</span>
                     </div>
-                    <span style={{ fontSize: "11px", color: "#90a4a2" }}>Click to expand ▼</span>
+                    <span style={{ fontSize: "11px", color: "#94A3B8" }}>Click to expand ▼</span>
                   </summary>
                   <div className="mp-details-content">
                     {String(response.gemini_output)}
@@ -1120,7 +1120,7 @@ export default function MainPage() {
                       </motion.span>
                       <span>Compressed Knowledge Schema (JSON)</span>
                     </div>
-                    <span style={{ fontSize: "11px", color: "#90a4a2" }}>Click to expand ▼</span>
+                    <span style={{ fontSize: "11px", color: "#94A3B8" }}>Click to expand ▼</span>
                   </summary>
                   <div className="mp-details-content">
                     <pre className="mp-json-box">
