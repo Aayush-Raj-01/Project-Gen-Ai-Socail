@@ -3,9 +3,11 @@ uvicorn[standard]
 python-multipart
 python-dotenv
 torch
-transformers
+transformers>=5.5.3
 accelerate
 bitsandbytes
 Pillow
 easyocr
 google-genai
+timm
+einops

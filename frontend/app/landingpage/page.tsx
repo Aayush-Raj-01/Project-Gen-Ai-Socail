@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 "use client";
 
 import React, { useState } from "react";
@@ -625,3 +626,12 @@ export default function LandingPage() {
     </div>
   );
 }
+=======
+export default function LandingPage() {
+  return (
+    <div>
+      <h1>Landing Page</h1>
+    </div>
+  );
+}
+>>>>>>> cd04194944c3c253701ad571a5115640423c06cb

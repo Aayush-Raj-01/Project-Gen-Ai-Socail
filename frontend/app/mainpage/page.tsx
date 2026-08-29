@@ -1,9 +1,14 @@
 "use client";
 
+<<<<<<< HEAD
 import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { SearchBar, type SearchResultItem } from "../components/SearchBar";
 import { NavyButton } from "../components/NavyButton";
+=======
+import { useState, useRef, useCallback } from "react";
+import "./mainpage.css";
+>>>>>>> cd04194944c3c253701ad571a5115640423c06cb
 
 /* ────────────────────────────────────────────
    Data for the bubble-type popup selectors
@@ -90,6 +95,7 @@ export default function MainPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [moderationWarning, setModerationWarning] = useState<string | null>(null);
 
   // File input refs
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -184,28 +190,49 @@ export default function MainPage() {
   }, []);
 
   const handleSubmit = useCallback(async () => {
-    // Find the first image file to send
     const imageFile = attachedFiles.find((f) => f.type === "image");
-    if (!imageFile) {
-      setError("Please attach an image file to analyze.");
+    const hasPrompt = prompt.trim().length > 0;
+
+    if (!imageFile && !hasPrompt) {
+      setError("Please enter a prompt or attach an image.");
       return;
     }
 
     setIsLoading(true);
     setError(null);
     setResponse(null);
+    setModerationWarning(null);
 
     try {
-      const formData = new FormData();
-      formData.append("file", imageFile.file);
+      let res: Response;
 
-      const res = await fetch("http://localhost:8000/analyze-image", {
-        method: "POST",
-        body: formData,
-      });
+      if (imageFile) {
+        // Image pipeline — send to /analyze-image
+        const formData = new FormData();
+        formData.append("file", imageFile.file);
+
+        res = await fetch("http://localhost:8000/analyze-image", {
+          method: "POST",
+          body: formData,
+        });
+      } else {
+        // Text-only pipeline — send to /process-prompt
+        res = await fetch("http://localhost:8000/process-prompt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: prompt.trim() }),
+        });
+      }
 
       if (!res.ok) {
         const errData = await res.json().catch(() => null);
+
+        // Check if this is a content moderation rejection
+        if (res.status === 403 && errData?.detail?.type === "content_violation") {
+          setModerationWarning(errData.detail.reason);
+          return;
+        }
+
         throw new Error(errData?.detail || `Server error: ${res.status}`);
       }
 
@@ -216,24 +243,12 @@ export default function MainPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [attachedFiles]);
+  }, [attachedFiles, prompt]);
 
   return (
     <div className="mainpage-root">
-      <style>{`
-        /* ── Reset & Base ── */
-        .mainpage-root {
-          min-height: 100vh;
-          background: #050a09;
-          color: #e0e8e6;
-          font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          position: relative;
-          overflow-x: hidden;
-        }
 
+<<<<<<< HEAD
         /* ── Ambient Background Glow ── */
         .mainpage-root::before {
           content: '';
@@ -885,6 +900,97 @@ export default function MainPage() {
           }
         }
       `}</style>
+=======
+      {/* ── Moderation Warning Popup ── */}
+      {moderationWarning && (
+        <>
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.6)",
+              backdropFilter: "blur(8px)",
+              zIndex: 999,
+            }}
+            onClick={() => setModerationWarning(null)}
+          />
+          <div
+            style={{
+              position: "fixed",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "min(440px, 90vw)",
+              background: "linear-gradient(135deg, #1a0a0a 0%, #2a1010 100%)",
+              border: "1px solid rgba(255, 80, 80, 0.3)",
+              borderRadius: 20,
+              padding: "32px 28px",
+              zIndex: 1000,
+              boxShadow: "0 24px 80px rgba(255, 40, 40, 0.15), 0 0 40px rgba(255, 0, 0, 0.05)",
+              animation: "fadeIn 0.25s ease-out",
+            }}
+          >
+            <div style={{ textAlign: "center", marginBottom: 20 }}>
+              <span style={{ fontSize: 48 }}>🛡️</span>
+            </div>
+            <h3 style={{
+              fontSize: 18,
+              fontWeight: 700,
+              color: "#ff6b6b",
+              textAlign: "center",
+              marginBottom: 12,
+            }}>
+              Content Blocked
+            </h3>
+            <p style={{
+              fontSize: 14,
+              color: "rgba(255, 180, 180, 0.85)",
+              textAlign: "center",
+              lineHeight: 1.6,
+              marginBottom: 24,
+            }}>
+              Your request was flagged by our content safety system:
+            </p>
+            <div style={{
+              background: "rgba(255, 60, 60, 0.08)",
+              border: "1px solid rgba(255, 80, 80, 0.15)",
+              borderRadius: 12,
+              padding: "14px 18px",
+              marginBottom: 24,
+            }}>
+              <p style={{
+                fontSize: 13,
+                color: "#ff9a9a",
+                lineHeight: 1.6,
+                margin: 0,
+              }}>
+                {moderationWarning}
+              </p>
+            </div>
+            <button
+              onClick={() => setModerationWarning(null)}
+              style={{
+                display: "block",
+                width: "100%",
+                padding: "12px 0",
+                background: "linear-gradient(135deg, #ff4444 0%, #cc2222 100%)",
+                border: "none",
+                borderRadius: 12,
+                color: "#fff",
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+                transition: "opacity 0.2s",
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.opacity = "0.85")}
+              onMouseOut={(e) => (e.currentTarget.style.opacity = "1")}
+            >
+              Understood
+            </button>
+          </div>
+        </>
+      )}
+>>>>>>> cd04194944c3c253701ad571a5115640423c06cb
 
       {/* Floating particles */}
       <div className="mp-particle" />
@@ -1077,7 +1183,7 @@ export default function MainPage() {
 
             <button
               className="mp-submit-btn"
-              disabled={isLoading || (attachedFiles.length === 0)}
+              disabled={isLoading || (attachedFiles.length === 0 && prompt.trim().length === 0)}
               title="Generate"
               onClick={handleSubmit}
             >
@@ -1166,8 +1272,8 @@ export default function MainPage() {
             fontSize: 14,
           }}>
             <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>⏳</span>
-            {" "}Processing image through pipeline...
-            <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+             {" "}Processing through pipeline...
+
           </div>
         )}
 
@@ -1190,7 +1296,11 @@ export default function MainPage() {
             }}>Pipeline Result</h3>
 
             {/* Final Output */}
+<<<<<<< HEAD
             {Boolean(response.final_output) && (
+=======
+            {!!response.final_output && (
+>>>>>>> cd04194944c3c253701ad571a5115640423c06cb
               <div style={{ marginBottom: 20 }}>
                 <h4 style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>Final Output</h4>
                 <div style={{ fontSize: 14, lineHeight: 1.7, color: "#d4e8e2", whiteSpace: "pre-wrap" }}>
@@ -1200,13 +1310,21 @@ export default function MainPage() {
             )}
 
             {/* Image Analysis */}
+<<<<<<< HEAD
             {Boolean(response.image_analysis) && (
+=======
+            {!!response.image_analysis && (
+>>>>>>> cd04194944c3c253701ad571a5115640423c06cb
               <div style={{ marginBottom: 20 }}>
                 <h4 style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>Image Analysis</h4>
                 <p style={{ fontSize: 13, color: "#a0d4c4", lineHeight: 1.6 }}>
                   {String((response.image_analysis as Record<string, unknown>).image_description || "")}
                 </p>
+<<<<<<< HEAD
                 {Boolean((response.image_analysis as Record<string, unknown>).ocr_text) && (
+=======
+                {!!(response.image_analysis as Record<string, unknown>).ocr_text && (
+>>>>>>> cd04194944c3c253701ad571a5115640423c06cb
                   <p style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 8 }}>
                     <strong>OCR:</strong> {String((response.image_analysis as Record<string, unknown>).ocr_text)}
                   </p>
@@ -1215,7 +1333,11 @@ export default function MainPage() {
             )}
 
             {/* Gemini Output */}
+<<<<<<< HEAD
             {Boolean(response.gemini_output) && (
+=======
+            {!!response.gemini_output && (
+>>>>>>> cd04194944c3c253701ad571a5115640423c06cb
               <details style={{ marginBottom: 12 }}>
                 <summary style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", cursor: "pointer", textTransform: "uppercase", letterSpacing: 1.5 }}>Gemini Raw Output</summary>
                 <div style={{ fontSize: 13, color: "#7dd4b8", marginTop: 8, whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
@@ -1225,7 +1347,11 @@ export default function MainPage() {
             )}
 
             {/* Compressed Data */}
+<<<<<<< HEAD
             {Boolean(response.compressed_data) && (
+=======
+            {!!response.compressed_data && (
+>>>>>>> cd04194944c3c253701ad571a5115640423c06cb
               <details>
                 <summary style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", cursor: "pointer", textTransform: "uppercase", letterSpacing: 1.5 }}>Compressed Data (JSON)</summary>
                 <pre style={{ fontSize: 11, color: "#7dd4b8", marginTop: 8, overflow: "auto", maxHeight: 300, background: "rgba(0,0,0,0.3)", padding: 12, borderRadius: 8 }}>
