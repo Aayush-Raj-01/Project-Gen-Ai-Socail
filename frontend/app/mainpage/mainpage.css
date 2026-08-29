@@ -1,25 +1,27 @@
 /* ─────────────────────────────────────────────────────────────
-   GenAI Social Studio — Clean, Minimal & Modern Design System
+   GenAI Social Studio — Refined Clean & Atmospheric Design
    Palette:
      • Deep charcoal / Near black (background):       #060b0c
      • Vibrant teal (Accents & highlights):            #39b49a
      • Pure white (Main Typography):                   #ffffff
      • Grayish teal (Paragraph & Secondary Text):      #90a4a2
-     • Darkfaded teal (Subtle surfaces & borders):     #0c2321
+     • Darkfaded teal (Depth glows & radial surfaces): #0c2321
    ───────────────────────────────────────────────────────────── */
 
 :root {
   --bg-charcoal: #060b0c;
   --accent-teal: #39b49a;
+  --accent-teal-hover: #46c7ad;
   --text-white: #ffffff;
   --text-gray-teal: #90a4a2;
+  --text-slate-dark: #64807e;
   --surface-dark-teal: #0c2321;
 }
 
-/* ── Base Canvas ── */
+/* ── Base Canvas with Soft #0c2321 Radial Gradient ── */
 .mainpage-root {
   min-height: 100vh;
-  background: var(--bg-charcoal);
+  background: radial-gradient(ellipse at 50% 12%, #0c2321 0%, #081313 40%, #060b0c 90%);
   color: var(--text-white);
   font-family: var(--font-plus-jakarta), 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   display: flex;
@@ -27,6 +29,20 @@
   align-items: center;
   position: relative;
   overflow-x: hidden;
+}
+
+/* ── Soft Hero Radial Glow for Depth (#0c2321) ── */
+.mp-hero-radial-glow {
+  position: absolute;
+  top: 140px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(720px, 92vw);
+  height: 420px;
+  background: radial-gradient(ellipse at center, rgba(12, 35, 33, 0.85) 0%, rgba(12, 35, 33, 0.35) 55%, transparent 75%);
+  filter: blur(48px);
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* ── Icon Badges ── */
@@ -52,10 +68,10 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(6, 11, 12, 0.9);
+  background: rgba(6, 11, 12, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(57, 180, 154, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .mp-logo-wrap {
@@ -93,7 +109,7 @@
 
 .mp-logo-badge {
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--accent-teal);
   background: #0c2321;
   border: 1px solid rgba(57, 180, 154, 0.25);
@@ -111,7 +127,7 @@
 /* ── Dark Black Search Bar Styling ── */
 .mp-header-search .search-bar-input-wrap {
   background: #000000 !important;
-  border: 1px solid rgba(57, 180, 154, 0.22) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7) !important;
 }
 
@@ -147,13 +163,13 @@
 
 .mp-header-search .search-dropdown {
   background: #000000 !important;
-  border: 1px solid rgba(57, 180, 154, 0.25) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85) !important;
 }
 
 .mp-header-search .search-dropdown-footer {
   background: #040708 !important;
-  border-top: 1px solid rgba(57, 180, 154, 0.15) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 .mp-header-actions {
@@ -169,7 +185,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid rgba(57, 180, 154, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(12, 35, 33, 0.3);
   color: var(--text-gray-teal);
 }
@@ -205,9 +221,11 @@
   border: 1px solid rgba(57, 180, 154, 0.25);
   color: var(--accent-teal);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.3px;
   margin-bottom: 18px;
+  position: relative;
+  z-index: 2;
 }
 
 .mp-title {
@@ -218,6 +236,8 @@
   letter-spacing: -0.8px;
   color: var(--text-white);
   line-height: 1.25;
+  position: relative;
+  z-index: 2;
 }
 
 .mp-title-highlight {
@@ -234,24 +254,27 @@
   letter-spacing: 0.1px;
   max-width: 580px;
   line-height: 1.6;
+  position: relative;
+  z-index: 2;
 }
 
 /* ── Central Prompt Card ── */
 .mp-prompt-card {
   width: 100%;
-  background: rgba(12, 35, 33, 0.35);
-  border: 1px solid rgba(57, 180, 154, 0.2);
+  background: rgba(8, 19, 18, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 18px;
   padding: 0;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   position: relative;
   overflow: hidden;
+  z-index: 2;
 }
 
 .mp-prompt-card:focus-within {
-  border-color: rgba(57, 180, 154, 0.5);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  border-color: rgba(57, 180, 154, 0.45);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
 }
 
 /* ── Textarea ── */
@@ -296,22 +319,22 @@
   font-size: 12px;
   font-weight: 600;
   background: #020506;
-  border: 1px solid rgba(57, 180, 154, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--text-white);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
   letter-spacing: 0.1px;
 }
 
 .mp-attachment-chip.chip-image {
-  border-color: rgba(57, 180, 154, 0.35);
+  border-color: rgba(57, 180, 154, 0.3);
 }
 
 .mp-attachment-chip.chip-pdf {
-  border-color: rgba(56, 189, 248, 0.35);
+  border-color: rgba(56, 189, 248, 0.3);
 }
 
 .mp-attachment-chip.chip-video {
-  border-color: rgba(192, 132, 252, 0.35);
+  border-color: rgba(192, 132, 252, 0.3);
 }
 
 .mp-attach-icon-badge {
@@ -323,17 +346,17 @@
 
 .mp-attach-icon-badge.badge-image {
   background: #061211;
-  border: 1px solid rgba(57, 180, 154, 0.3);
+  border: 1px solid rgba(57, 180, 154, 0.25);
 }
 
 .mp-attach-icon-badge.badge-pdf {
   background: #04101e;
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  border: 1px solid rgba(56, 189, 248, 0.25);
 }
 
 .mp-attach-icon-badge.badge-video {
   background: #110624;
-  border: 1px solid rgba(192, 132, 252, 0.3);
+  border: 1px solid rgba(192, 132, 252, 0.25);
 }
 
 .mp-attach-filename {
@@ -370,7 +393,7 @@
   padding: 6px 12px 6px 8px;
   border-radius: 8px;
   background: #060b0c;
-  border: 1px solid rgba(57, 180, 154, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .mp-link-icon-badge {
@@ -416,8 +439,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 18px;
-  border-top: 1px solid rgba(57, 180, 154, 0.12);
-  background: rgba(6, 11, 12, 0.4);
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(6, 11, 12, 0.5);
 }
 
 .mp-toolbar-left {
@@ -437,7 +460,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid rgba(57, 180, 154, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(12, 35, 33, 0.35);
   color: var(--text-gray-teal);
 }
@@ -451,40 +474,40 @@
 
 .tool-image .mp-tool-icon-badge {
   background: #0c2321;
-  border: 1px solid rgba(57, 180, 154, 0.35);
+  border: 1px solid rgba(57, 180, 154, 0.3);
 }
 
 .tool-image:hover {
   background: rgba(57, 180, 154, 0.1);
-  border-color: rgba(57, 180, 154, 0.4);
+  border-color: rgba(57, 180, 154, 0.35);
   color: var(--text-white);
 }
 
 .tool-pdf .mp-tool-icon-badge {
   background: #082244;
-  border: 1px solid rgba(56, 189, 248, 0.35);
+  border: 1px solid rgba(56, 189, 248, 0.3);
 }
 
 .tool-pdf:hover {
   background: rgba(56, 189, 248, 0.1);
-  border-color: rgba(56, 189, 248, 0.4);
+  border-color: rgba(56, 189, 248, 0.35);
   color: var(--text-white);
 }
 
 .tool-video .mp-tool-icon-badge {
   background: #270e54;
-  border: 1px solid rgba(192, 132, 252, 0.35);
+  border: 1px solid rgba(192, 132, 252, 0.3);
 }
 
 .tool-video:hover {
   background: rgba(192, 132, 252, 0.1);
-  border-color: rgba(192, 132, 252, 0.4);
+  border-color: rgba(192, 132, 252, 0.35);
   color: var(--text-white);
 }
 
 .tool-link .mp-tool-icon-badge {
   background: #0c2321;
-  border: 1px solid rgba(57, 180, 154, 0.35);
+  border: 1px solid rgba(57, 180, 154, 0.3);
 }
 
 .tool-link:hover,
@@ -504,19 +527,19 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid rgba(57, 180, 154, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(12, 35, 33, 0.35);
   color: var(--text-gray-teal);
 }
 
 .mp-audio-btn .mp-tool-icon-badge {
   background: #3f0717;
-  border: 1px solid rgba(251, 113, 133, 0.35);
+  border: 1px solid rgba(251, 113, 133, 0.3);
 }
 
 .mp-audio-btn:hover {
   background: rgba(251, 113, 133, 0.1);
-  border-color: rgba(251, 113, 133, 0.4);
+  border-color: rgba(251, 113, 133, 0.35);
   color: var(--text-white);
 }
 
@@ -533,34 +556,38 @@
   background: #ef4444;
 }
 
-/* Submit Button */
+/* ── Primary Action Submit Button (High-Contrast Dark Text #060b0c on Solid Teal #39b49a) ── */
 .mp-submit-btn {
   width: 40px;
   height: 40px;
   border-radius: 10px;
   background: var(--accent-teal);
   border: none;
-  color: #060b0c;
+  color: #060b0c; /* Crisp dark text for optimal contrast and legibility */
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
+  box-shadow: 0 2px 10px rgba(57, 180, 154, 0.35);
 }
 
 .mp-submit-btn:hover:not(:disabled) {
-  background: #46c7ad;
+  background: var(--accent-teal-hover);
+  color: #060b0c;
   transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(57, 180, 154, 0.5);
 }
 
 .mp-submit-btn:disabled {
-  opacity: 0.3;
+  opacity: 0.35;
   cursor: not-allowed;
-  background: rgba(12, 35, 33, 0.5);
-  color: var(--text-gray-teal);
+  background: rgba(12, 35, 33, 0.6);
+  color: var(--text-slate-dark);
+  box-shadow: none;
 }
 
 .mp-hidden-input {
@@ -576,6 +603,8 @@
   gap: 8px;
   flex-wrap: wrap;
   margin-top: 18px;
+  position: relative;
+  z-index: 2;
 }
 
 .mp-quick-chip {
@@ -588,7 +617,7 @@
   font-weight: 650;
   background: #030607;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #64807e;
+  color: var(--text-slate-dark);
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
   transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
@@ -625,7 +654,7 @@
 }
 
 .mp-quick-chip:hover {
-  color: #39b49a;
+  color: var(--accent-teal);
   background: #000000;
   border-color: rgba(57, 180, 154, 0.45);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(57, 180, 154, 0.2);
@@ -639,6 +668,8 @@
   flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
+  position: relative;
+  z-index: 2;
 }
 
 .mp-selector-trigger {
@@ -653,7 +684,7 @@
   transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: #030607;
-  color: #64807e;
+  color: var(--text-slate-dark);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
   position: relative;
   user-select: none;
@@ -699,23 +730,24 @@
 
 .mp-selector-trigger:hover {
   border-color: rgba(57, 180, 154, 0.4);
-  color: #39b49a;
+  color: var(--accent-teal);
   background: #000000;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8);
 }
 
 .mp-selector-trigger.active,
 .mp-selector-trigger.has-value {
-  border-color: #39b49a;
+  border-color: var(--accent-teal);
   background: #000000;
   color: #ffffff;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(57, 180, 154, 0.25);
 }
 
+/* Focused Active Tag / Selector Pill */
 .mp-selector-value {
   font-size: 11px;
   font-weight: 700;
-  color: #39b49a;
+  color: var(--accent-teal);
   background: rgba(57, 180, 154, 0.12);
   border: 1px solid rgba(57, 180, 154, 0.3);
   padding: 2px 8px;
@@ -760,7 +792,7 @@
   letter-spacing: 0.6px;
   text-transform: uppercase;
   padding: 4px 8px 6px;
-  border-bottom: 1px solid rgba(57, 180, 154, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   margin-bottom: 4px;
 }
 
@@ -805,15 +837,17 @@
   background: var(--accent-teal);
 }
 
-/* ── Result Container ── */
+/* ── Result Dashboard Container with Soft #0c2321 Depth Radial Gradient ── */
 .mp-result-container {
   width: 100%;
   margin-top: 32px;
-  background: rgba(12, 35, 33, 0.35);
+  background: radial-gradient(circle at 50% 0%, rgba(12, 35, 33, 0.7) 0%, rgba(6, 11, 12, 0.95) 75%);
   border: 1px solid rgba(57, 180, 154, 0.2);
   border-radius: 18px;
   padding: 24px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+  position: relative;
+  z-index: 2;
 }
 
 .mp-result-header {
@@ -822,7 +856,7 @@
   justify-content: space-between;
   margin-bottom: 20px;
   padding-bottom: 14px;
-  border-bottom: 1px solid rgba(57, 180, 154, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .mp-result-title-wrap {
@@ -840,7 +874,7 @@
 
 .mp-result-badge {
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--accent-teal);
   background: rgba(57, 180, 154, 0.12);
   border: 1px solid rgba(57, 180, 154, 0.25);
@@ -850,24 +884,28 @@
   letter-spacing: 0.5px;
 }
 
+/* ── Solid Primary Copy Button (High Contrast Dark Text #060b0c on Solid Teal #39b49a) ── */
 .mp-copy-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 6px 14px;
+  gap: 6px;
+  padding: 7px 15px;
   border-radius: 8px;
-  background: rgba(57, 180, 154, 0.12);
-  border: 1px solid rgba(57, 180, 154, 0.3);
-  color: var(--accent-teal);
+  background: var(--accent-teal);
+  border: none;
+  color: #060b0c; /* Dark text for contrast & legibility on solid teal */
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 750;
   cursor: pointer;
   transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(57, 180, 154, 0.3);
 }
 
 .mp-copy-btn:hover {
-  background: rgba(57, 180, 154, 0.22);
-  color: #ffffff;
+  background: var(--accent-teal-hover);
+  color: #060b0c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(57, 180, 154, 0.45);
 }
 
 .mp-result-section {
@@ -879,7 +917,7 @@
   align-items: center;
   gap: 7px;
   font-size: 11.5px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--accent-teal);
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -915,7 +953,7 @@
 
 .mp-final-box {
   background: #060b0c;
-  border: 1px solid rgba(57, 180, 154, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   padding: 18px;
   font-size: 14px;
@@ -926,7 +964,7 @@
 
 .mp-vision-box {
   background: #060b0c;
-  border: 1px solid rgba(57, 180, 154, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   padding: 14px;
   font-size: 13px;
@@ -937,7 +975,7 @@
 
 .mp-ocr-box {
   background: #060b0c;
-  border: 1px solid rgba(57, 180, 154, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 12.5px;
@@ -951,7 +989,7 @@
 
 .mp-details-toggle {
   background: rgba(6, 11, 12, 0.6);
-  border: 1px solid rgba(57, 180, 154, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   padding: 12px 16px;
   margin-bottom: 10px;
@@ -981,7 +1019,7 @@
 .mp-details-content {
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px solid rgba(57, 180, 154, 0.12);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   font-size: 12.5px;
   color: #a7f3d0;
   line-height: 1.6;
@@ -990,7 +1028,7 @@
 
 .mp-json-box {
   background: #060b0c;
-  border: 1px solid rgba(57, 180, 154, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   padding: 12px;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;

@@ -406,6 +406,9 @@ export default function MainPage() {
 
       {/* ── Main Content ── */}
       <main className="mp-content">
+        {/* Soft Radial Glow for depth behind Hero Section */}
+        <div className="mp-hero-radial-glow" />
+
         <motion.div
           className="mp-hero-badge"
           initial={{ opacity: 0, y: -10 }}
