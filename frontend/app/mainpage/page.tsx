@@ -281,14 +281,6 @@ export default function MainPage() {
 
   return (
     <div className="mainpage-root">
-      {/* ── Ambient Central Glow & Particles ── */}
-      <div className="mainpage-glow-center" />
-      <div className="mp-particle" />
-      <div className="mp-particle" />
-      <div className="mp-particle" />
-      <div className="mp-particle" />
-      <div className="mp-particle" />
-
       {/* ── Moderation Warning Popup ── */}
       {moderationWarning && (
         <>
