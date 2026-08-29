@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { SearchBar, type SearchResultItem } from "../components/SearchBar";
@@ -79,6 +79,174 @@ const SELECTOR_DATA = {
 type SelectorKey = keyof typeof SELECTOR_DATA;
 
 export default function MainPage() {
+  // ── 3D Plexus Background Canvas ──
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animId: number;
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const handleResize = () => {
+      if (!canvas) return;
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    const PARTICLE_COUNT = 85;
+    const MAX_DISTANCE = 170;
+    const FOV = 350;
+
+    let mouseX = 0;
+    let mouseY = 0;
+    let targetRotationX = 0;
+    let targetRotationY = 0;
+    let rotationX = 0;
+    let rotationY = 0;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseX = (e.clientX - width / 2) * 0.0005;
+      mouseY = (e.clientY - height / 2) * 0.0005;
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+
+    class Particle3D {
+      x = 0;
+      y = 0;
+      z = 0;
+      vx = 0;
+      vy = 0;
+      vz = 0;
+      baseColor = "0, 242, 254";
+
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = (Math.random() - 0.5) * width * 1.2;
+        this.y = (Math.random() - 0.5) * height * 1.2;
+        this.z = (Math.random() - 0.5) * 600;
+        this.vx = (Math.random() - 0.5) * 0.4;
+        this.vy = (Math.random() - 0.5) * 0.4;
+        this.vz = (Math.random() - 0.5) * 0.4;
+        this.baseColor = Math.random() > 0.4 ? "0, 242, 254" : "176, 87, 254";
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.z += this.vz;
+
+        const boundX = (width * 1.2) / 2;
+        const boundY = (height * 1.2) / 2;
+        const boundZ = 300;
+
+        if (Math.abs(this.x) > boundX) this.vx *= -1;
+        if (Math.abs(this.y) > boundY) this.vy *= -1;
+        if (Math.abs(this.z) > boundZ) this.vz *= -1;
+      }
+
+      project(rotX: number, rotY: number) {
+        // Rotate Y
+        const cosY = Math.cos(rotY);
+        const sinY = Math.sin(rotY);
+        const x1 = this.x * cosY - this.z * sinY;
+        const z1 = this.z * cosY + this.x * sinY;
+
+        // Rotate X
+        const cosX = Math.cos(rotX);
+        const sinX = Math.sin(rotX);
+        const y1 = this.y * cosX - z1 * sinX;
+        const z2 = z1 * cosX + this.y * sinX;
+
+        // Perspective Projection
+        const scale = FOV / (FOV + z2 + 400);
+        return {
+          x: x1 * scale + width / 2,
+          y: y1 * scale + height / 2,
+          scale: scale,
+          z: z2,
+        };
+      }
+    }
+
+    const particles = Array.from({ length: PARTICLE_COUNT }, () => new Particle3D());
+
+    const animate = () => {
+      ctx.clearRect(0, 0, width, height);
+
+      // Smooth mouse rotation
+      targetRotationY += (mouseX - targetRotationY) * 0.05;
+      targetRotationX += (mouseY - targetRotationX) * 0.05;
+      rotationY += 0.001 + targetRotationY * 0.1;
+      rotationX += targetRotationX * 0.1;
+
+      // Update positions
+      particles.forEach((p) => p.update());
+
+      // Project 3D to 2D
+      const projected = particles.map((p) => ({
+        data: p,
+        proj: p.project(rotationX, rotationY),
+      }));
+
+      // Draw Connection Lines
+      for (let i = 0; i < projected.length; i++) {
+        for (let j = i + 1; j < projected.length; j++) {
+          const p1 = projected[i].proj;
+          const p2 = projected[j].proj;
+
+          const dx = p1.x - p2.x;
+          const dy = p1.y - p2.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < MAX_DISTANCE) {
+            const alpha = (1 - dist / MAX_DISTANCE) * 0.35 * Math.min(p1.scale, p2.scale);
+            ctx.strokeStyle = `rgba(0, 242, 254, ${alpha})`;
+            ctx.lineWidth = 0.8 * Math.min(p1.scale, p2.scale);
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Draw Glowing Nodes
+      projected.forEach(({ data, proj }) => {
+        if (proj.scale > 0) {
+          const radius = Math.max(1, 2.2 * proj.scale);
+          ctx.fillStyle = `rgba(${data.baseColor}, ${0.8 * proj.scale})`;
+          ctx.shadowBlur = 12;
+          ctx.shadowColor = `rgba(${data.baseColor}, 0.8)`;
+          ctx.beginPath();
+          ctx.arc(proj.x, proj.y, radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+      });
+
+      animId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("mousemove", handleMouseMove);
+      cancelAnimationFrame(animId);
+    };
+  }, []);
+
   // ── State ──
   const [prompt, setPrompt] = useState(() => {
     if (typeof window !== "undefined") {
@@ -370,6 +538,9 @@ export default function MainPage() {
           </div>
         </>
       )}
+
+      {/* ── Fixed 3D Plexus Background Canvas ── */}
+      <canvas id="plexus-canvas" ref={canvasRef} className="mp-plexus-canvas" />
 
       {/* ── Animated Mesh / Aurora Gradient Background ── */}
       <div className="mp-aurora-container" aria-hidden="true">
