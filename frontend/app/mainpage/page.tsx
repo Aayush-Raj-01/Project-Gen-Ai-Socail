@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import { SearchBar, type SearchResultItem } from "../components/SearchBar";
 import { NavyButton } from "../components/NavyButton";
 import "./mainpage.css";
