@@ -119,5 +119,62 @@
       "gemini_output": "**Analysis:** A low-priority, text-only query focuses on a user considering purchasing a car, specifically seeking the rationale behind such a decision. Key themes include automotive, purchase decisions, and consumer behavior.",
       "final_output": "**Analysis:**  \nThe query is low priority and consists solely of text. It pertains to a user considering the purchase of a car and seeks to understand the rationale behind that decision. Key themes include automotive considerations, consumer decision-making processes, and consumer behavior."
     }
+  },
+  {
+    "timestamp": "2026-08-29T11:26:32.334488",
+    "image_path": "c:\\Users\\Rashmalai\\Desktop\\Web dev\\Project Gen Ai Social\\backend\\uploads\\2a0b003f519149869be9c8080dc63342.pdf",
+    "result": {
+      "pdf_analysis": {
+        "extracted_text": "",
+        "page_count": 1,
+        "method": "text"
+      },
+      "compressed_data": {
+        "document_type": "",
+        "summary": "",
+        "keywords": [],
+        "topics": [],
+        "entities": [],
+        "organizations": [],
+        "locations": [],
+        "dates": [],
+        "statistics": [],
+        "risks": [],
+        "recommendations": [],
+        "important_facts": [],
+        "image_context": "PDF extraction. Pages: 1. Method: text",
+        "priority": ""
+      },
+      "gemini_output": "No content data (summary, keywords, topics, entities, organizations, locations, dates, statistics, risks, recommendations, important facts) was provided.\nSource: Single-page PDF via text extraction.\nA comprehensive content analysis is not possible due to a lack of data.",
+      "final_output": "No content data (such as summary, keywords, topics, entities, organizations, locations, dates, statistics, risks, recommendations, or important facts) was available for analysis.  \n\nSource: Single-page PDF extracted via text processing.  \n\nA comprehensive content analysis cannot be performed due to the absence of substantive information."
+    }
+  },
+  {
+    "timestamp": "2026-08-29T11:39:17.321368",
+    "image_path": "c:\\Users\\Rashmalai\\Desktop\\Web dev\\Project Gen Ai Social\\backend\\uploads\\862ad3337f5e402cb8b27030329d2956.mp4",
+    "result": {
+      "video_analysis": {
+        "transcription": "you you you",
+        "language": "en"
+      },
+      "compressed_data": {
+        "document_type": "",
+        "summary": "",
+        "keywords": [],
+        "topics": [],
+        "entities": [],
+        "organizations": [],
+        "locations": [],
+        "dates": [],
+        "statistics": [],
+        "risks": [],
+        "recommendations": [],
+        "important_facts": [],
+        "image_context": "Video transcription. Language: en",
+        "priority": ""
+      },
+      "gemini_output": "Image context: Video transcription (English). No content for document type, summary, keywords, topics, entities, organizations, locations, dates, statistics, risks, recommendations, important facts, or priority.",
+      "final_output": "**Professional Summary:**\n\nNo document type, summary, keywords, topics, entities, organizations, locations, dates, statistics, risks, recommendations, important facts, or priority information is available from the provided content.  \n\nThe input consists solely of a video transcription in English, with no additional contextual or analytical data provided. As such, no factual elements beyond the transcription itself can be extracted or structured.  \n\nAll original facts remain intact—no new information has been inferred, added, or modified.  \n\nThis assessment is based strictly on the provided input. No assumptions, inferences, or external data have been introduced.  \n\n**Conclusion:**  \nNo actionable or descriptive metadata (e.g., keywords, topics, entities, or insights) can be derived from the content. The available information is limited to the raw transcription of a video in English. No further analysis or interpretation is possible without additional context or source material."
+    }
   }
 ]
