@@ -9,5 +9,17 @@ bitsandbytes
 Pillow
 easyocr
 google-genai
+groq
 timm
 einops
+
+# Video/Audio processing
+faster-whisper
+moviepy
+ultralytics
+ffmpeg-python
+
+# PDF processing
+PyPDF2
+pytesseract
+PyMuPDF

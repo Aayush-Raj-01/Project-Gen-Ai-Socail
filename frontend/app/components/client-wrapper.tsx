@@ -14,49 +14,47 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
 
   // Manage Initial App Load (6 seconds)
   useEffect(() => {
-    // Check if we've already done the initial 6-second load in this session
-    const hasInitialLoaded = sessionStorage.getItem("hasInitialLoaded");
+    const hasInitialLoaded = typeof window !== "undefined" ? sessionStorage.getItem("hasInitialLoaded") : null;
     
     if (!hasInitialLoaded) {
-      // First ever load in this session
-      setIsLoading(true);
-      setIsInitialLoad(true);
-      
       const timer = setTimeout(() => {
         setIsLoading(false);
-        sessionStorage.setItem("hasInitialLoaded", "true");
-      }, 6500); // ~6-7 seconds as requested
-      
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("hasInitialLoaded", "true");
+        }
+      }, 6500);
       return () => clearTimeout(timer);
     } else {
-      // Already did the initial big load
-      setIsInitialLoad(false);
-      setIsLoading(false);
+      const timer = setTimeout(() => {
+        setIsInitialLoad(false);
+        setIsLoading(false);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, []);
 
   // Manage Page Transitions / Route Changes (1.5 seconds)
   useEffect(() => {
-    // Skip if we are currently doing the initial load
     if (isInitialLoad) return;
     
-    setIsLoading(true);
+    const startTimer = setTimeout(() => {
+      setIsLoading(true);
+    }, 0);
     
-    const timer = setTimeout(() => {
+    const endTimer = setTimeout(() => {
       setIsLoading(false);
-    }, 1500); // Fast load for transitions
+    }, 1500);
     
-    return () => clearTimeout(timer);
-  }, [pathname, searchParams]); // Trigger when route changes
+    return () => {
+      clearTimeout(startTimer);
+      clearTimeout(endTimer);
+    };
+  }, [pathname, searchParams, isInitialLoad]);
 
   return (
     <>
       <StartLoading isLoading={isLoading} isInitialLoad={isInitialLoad} />
       <Navbar />
-      {/* 
-        Hide the main content slightly while loading to prevent flashes, 
-        or just let it render behind the fixed loading screen 
-      */}
       <div className={`transition-opacity duration-500 flex flex-col min-h-screen ${isLoading ? "opacity-0" : "opacity-100"}`}>
         {children}
       </div>

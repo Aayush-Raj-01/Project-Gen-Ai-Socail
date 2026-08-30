@@ -26,6 +26,9 @@ import os
 from datetime import datetime
 
 from image_analyzer import analyze_image
+from video_analyzer import analyze_video, unload_video_analyzer
+from audio_analyzer import analyze_audio
+from pdf_analyzer import analyze_pdf
 from llm import compress_to_json, beautify_output, moderate_content
 from gemini_service import generate_from_compressed_json
 from load_models import unload_florence_model, unload_ocr_reader
@@ -127,7 +130,7 @@ def _safe_parse_json(raw: str) -> dict:
 # Public API
 # ---------------------------------------------------------------------------
 
-def process_image(image_path: str) -> dict:
+def process_image(image_path: str, desired_outputs: list = None) -> dict:
     """
     Full pipeline for image-based content transformation.
 
@@ -139,6 +142,7 @@ def process_image(image_path: str) -> dict:
 
     Args:
         image_path: Path to the uploaded image file.
+        desired_outputs: List of specific requested output formats.
 
     Returns:
         Complete response dict matching the specified output schema.
@@ -190,7 +194,7 @@ DETECTED OBJECTS:
     # ------------------------------------------------------------------
     print("[workflow] Step 3/4 — Gemini generation ...")
     compressed_json_str = json.dumps(compressed_data, ensure_ascii=False)
-    gemini_output = generate_from_compressed_json(compressed_json_str)
+    gemini_output = generate_from_compressed_json(compressed_json_str, desired_outputs)
 
     # ------------------------------------------------------------------
     # Step 4: Qwen Beautification
@@ -219,7 +223,7 @@ DETECTED OBJECTS:
     return response
 
 
-def process_prompt(prompt_text: str) -> dict:
+def process_prompt(prompt_text: str, desired_outputs: list = None) -> dict:
     """
     Pipeline for text-only content transformation (no image).
 
@@ -230,6 +234,7 @@ def process_prompt(prompt_text: str) -> dict:
 
     Args:
         prompt_text: The user's text prompt.
+        desired_outputs: List of specific requested output formats.
 
     Returns:
         Complete response dict with all intermediate and final outputs.
@@ -260,7 +265,7 @@ def process_prompt(prompt_text: str) -> dict:
     # ------------------------------------------------------------------
     print("[workflow] Step 2/3 — Gemini generation ...")
     compressed_json_str = json.dumps(compressed_data, ensure_ascii=False)
-    gemini_output = generate_from_compressed_json(compressed_json_str)
+    gemini_output = generate_from_compressed_json(compressed_json_str, desired_outputs)
 
     # ------------------------------------------------------------------
     # Step 3: Qwen Beautification
@@ -283,4 +288,127 @@ def process_prompt(prompt_text: str) -> dict:
 
     print("[workflow] === Pipeline complete ===")
 
+    return response
+
+
+def process_video(video_path: str, desired_outputs: list = None) -> dict:
+    print(f"[workflow] === Starting video pipeline for: {video_path} ===")
+    print("[workflow] Step 1/4 — Video analysis ...")
+    video_data = analyze_video(video_path)
+    
+    # Free VRAM immediately after analysis
+    unload_video_analyzer()
+
+    # Convert complex multi-modal JSON to a flat text string
+    speech_text = " ".join([seg["text"] for seg in video_data.get("speech_transcript", [])])
+    
+    moderation = moderate_content(speech_text)
+    if not moderation["safe"]:
+        print(f"[workflow] BLOCKED: {moderation['reason']}")
+        raise ContentViolationError(moderation["reason"])
+
+    # Create a dense multi-modal context string for Qwen
+    visual_context_lines = []
+    for frame in video_data.get("visual_timeline", []):
+        t = frame["timestamp_second"]
+        objs = ", ".join(frame["objects_inside"]) if frame["objects_inside"] else "none"
+        action = frame["action_happening"]
+        text = frame["text_written"]
+        line = f"[{t}s] Action: {action} | Objects: {objs} | On-Screen Text: {text}"
+        visual_context_lines.append(line)
+        
+    visual_context = "\n".join(visual_context_lines)
+
+    print("[workflow] Step 2/4 — Qwen compression ...")
+    compressed_raw = compress_to_json(
+        raw_text=speech_text,
+        image_context=f"Multi-modal video analysis (Duration: {video_data.get('total_duration_seconds', 0)}s).\n\nVisual Timeline:\n{visual_context}",
+    )
+    compressed_data = _safe_parse_json(compressed_raw)
+
+    print("[workflow] Step 3/4 — Gemini generation ...")
+    compressed_json_str = json.dumps(compressed_data, ensure_ascii=False)
+    gemini_output = generate_from_compressed_json(compressed_json_str, desired_outputs)
+
+    print("[workflow] Step 4/4 — Qwen beautification ...")
+    final_output = beautify_output(gemini_output)
+
+    response = {
+        "video_analysis": video_data,
+        "compressed_data": compressed_data,
+        "gemini_output": gemini_output,
+        "final_output": final_output,
+    }
+    _save_output_to_file(video_path, response)
+    print("[workflow] === Pipeline complete ===")
+    return response
+
+
+def process_audio(audio_path: str, desired_outputs: list = None) -> dict:
+    print(f"[workflow] === Starting audio pipeline for: {audio_path} ===")
+    print("[workflow] Step 1/4 — Audio analysis ...")
+    audio_data = analyze_audio(audio_path)
+
+    moderation = moderate_content(audio_data["transcription"])
+    if not moderation["safe"]:
+        print(f"[workflow] BLOCKED: {moderation['reason']}")
+        raise ContentViolationError(moderation["reason"])
+
+    print("[workflow] Step 2/4 — Qwen compression ...")
+    compressed_raw = compress_to_json(
+        raw_text=audio_data["transcription"],
+        image_context=f"Audio transcription. Language: {audio_data['language']}",
+    )
+    compressed_data = _safe_parse_json(compressed_raw)
+
+    print("[workflow] Step 3/4 — Gemini generation ...")
+    compressed_json_str = json.dumps(compressed_data, ensure_ascii=False)
+    gemini_output = generate_from_compressed_json(compressed_json_str, desired_outputs)
+
+    print("[workflow] Step 4/4 — Qwen beautification ...")
+    final_output = beautify_output(gemini_output)
+
+    response = {
+        "audio_analysis": audio_data,
+        "compressed_data": compressed_data,
+        "gemini_output": gemini_output,
+        "final_output": final_output,
+    }
+    _save_output_to_file(audio_path, response)
+    print("[workflow] === Pipeline complete ===")
+    return response
+
+
+def process_pdf(pdf_path: str, desired_outputs: list = None) -> dict:
+    print(f"[workflow] === Starting PDF pipeline for: {pdf_path} ===")
+    print("[workflow] Step 1/4 — PDF analysis ...")
+    pdf_data = analyze_pdf(pdf_path)
+
+    moderation = moderate_content(pdf_data["extracted_text"])
+    if not moderation["safe"]:
+        print(f"[workflow] BLOCKED: {moderation['reason']}")
+        raise ContentViolationError(moderation["reason"])
+
+    print("[workflow] Step 2/4 — Qwen compression ...")
+    compressed_raw = compress_to_json(
+        raw_text=pdf_data["extracted_text"],
+        image_context=f"PDF extraction. Pages: {pdf_data['page_count']}. Method: {pdf_data['method']}",
+    )
+    compressed_data = _safe_parse_json(compressed_raw)
+
+    print("[workflow] Step 3/4 — Gemini generation ...")
+    compressed_json_str = json.dumps(compressed_data, ensure_ascii=False)
+    gemini_output = generate_from_compressed_json(compressed_json_str, desired_outputs)
+
+    print("[workflow] Step 4/4 — Qwen beautification ...")
+    final_output = beautify_output(gemini_output)
+
+    response = {
+        "pdf_analysis": pdf_data,
+        "compressed_data": compressed_data,
+        "gemini_output": gemini_output,
+        "final_output": final_output,
+    }
+    _save_output_to_file(pdf_path, response)
+    print("[workflow] === Pipeline complete ===")
     return response

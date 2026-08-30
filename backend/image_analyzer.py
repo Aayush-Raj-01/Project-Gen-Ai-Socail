@@ -10,6 +10,7 @@ Both models are lazy-loaded via load_models and stay cached.
 """
 
 from PIL import Image
+import os
 import torch
 from transformers import GenerationConfig,AutoProcessor, AutoModelForCausalLM
 
@@ -170,5 +171,12 @@ def analyze_image(image_path: str) -> dict:
     }
 
     print(f"[image_analyzer] Done. OCR chars={len(ocr_text)}, objects={len(detected_objects)}")
+
+    # Cleanup — delete the uploaded image file
+    try:
+        os.remove(image_path)
+        print(f"[image_analyzer] Cleaned up: {image_path}")
+    except OSError as e:
+        print(f"[image_analyzer] Cleanup warning: {e}")
 
     return result

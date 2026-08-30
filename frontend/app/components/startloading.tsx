@@ -12,7 +12,8 @@ export default function StartLoading({ isLoading, isInitialLoad }: StartLoadingP
 
   useEffect(() => {
     if (isLoading) {
-      setRender(true);
+      const timer = setTimeout(() => setRender(true), 0);
+      return () => clearTimeout(timer);
     } else {
       // Add a small delay before unmounting to allow fade-out animation
       const timeout = setTimeout(() => setRender(false), 800);
