@@ -33,18 +33,6 @@
   overflow-x: hidden;
 }
 
-/* ── Fixed 3D Plexus Canvas Background ── */
-#plexus-canvas,
-.mp-plexus-canvas {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 0;
-  pointer-events: none;
-}
-
 /* ── Animated Mesh / Aurora Gradient Container ── */
 .mp-aurora-container {
   position: fixed;
@@ -55,6 +43,18 @@
   pointer-events: none;
   z-index: 0;
   background: #090D0E;
+}
+
+/* ── Fixed 3D Plexus Canvas Background ── */
+#plexus-canvas,
+.mp-plexus-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  pointer-events: none;
 }
 
 /* Morphing Aurora Blobs */
