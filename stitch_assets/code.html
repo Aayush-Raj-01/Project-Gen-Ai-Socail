@@ -1,0 +1,393 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>GenAI Social Studio</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#273647",
+                        "surface-bright": "#2c3a4c",
+                        "on-primary-container": "#00422b",
+                        "secondary-fixed": "#dee4e1",
+                        "surface-dim": "#051424",
+                        "surface-container": "#122131",
+                        "secondary-container": "#444a49",
+                        "outline-variant": "#3c4a42",
+                        "background": "#051424",
+                        "on-secondary-fixed": "#171d1c",
+                        "on-error-container": "#ffdad6",
+                        "on-surface": "#d4e4fa",
+                        "on-error": "#690005",
+                        "tertiary-fixed-dim": "#bcc7de",
+                        "inverse-primary": "#006c49",
+                        "on-primary-fixed-variant": "#005236",
+                        "on-surface-variant": "#bbcabf",
+                        "error": "#ffb4ab",
+                        "on-tertiary": "#263143",
+                        "primary-fixed": "#6ffbbe",
+                        "on-background": "#d4e4fa",
+                        "on-primary-fixed": "#002113",
+                        "tertiary-container": "#98a3ba",
+                        "on-secondary-container": "#b3bab7",
+                        "primary-container": "#10b981",
+                        "surface-tint": "#4edea3",
+                        "error-container": "#93000a",
+                        "secondary": "#c2c8c5",
+                        "on-tertiary-fixed": "#111c2d",
+                        "on-tertiary-fixed-variant": "#3c475a",
+                        "tertiary": "#bcc7de",
+                        "tertiary-fixed": "#d8e3fb",
+                        "outline": "#86948a",
+                        "inverse-on-surface": "#233143",
+                        "on-tertiary-container": "#2e394c",
+                        "surface-container-lowest": "#010f1f",
+                        "on-primary": "#003824",
+                        "on-secondary": "#2b3230",
+                        "on-secondary-fixed-variant": "#424846",
+                        "inverse-surface": "#d4e4fa",
+                        "primary": "#4edea3",
+                        "surface-container-low": "#0d1c2d",
+                        "secondary-fixed-dim": "#c2c8c5",
+                        "surface-container-high": "#1c2b3c",
+                        "primary-fixed-dim": "#4edea3",
+                        "surface": "#051424",
+                        "surface-variant": "#273647"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit-xs": "4px",
+                        "container-max": "1440px",
+                        "margin-desktop": "64px",
+                        "unit-lg": "24px",
+                        "unit-sm": "8px",
+                        "unit-xl": "48px",
+                        "margin-mobile": "20px",
+                        "gutter": "24px",
+                        "unit-md": "16px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "title-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "headline-lg-mobile": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "0.02em", "fontWeight": "700" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "0.01em", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "title-md": ["20px", { "lineHeight": "28px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "0.01em", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { background-color: #050a09; color: #d4e4fa; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(32px);
+            -webkit-backdrop-filter: blur(32px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        .glass-modal {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(64px);
+            -webkit-backdrop-filter: blur(64px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+        .emerald-glow { box-shadow: 0 0 12px rgba(16, 185, 129, 0.5); }
+        .emerald-glow-focus:focus-within { box-shadow: 0 0 0 1px #10b981; border-color: #10b981; }
+        
+        /* Entrance Animations */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-up { animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .delay-100 { animation-delay: 100ms; opacity: 0; }
+        .delay-200 { animation-delay: 200ms; opacity: 0; }
+        .delay-300 { animation-delay: 300ms; opacity: 0; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+    </style>
+</head>
+<body class="min-h-screen relative overflow-x-hidden font-body-lg text-body-lg">
+<!-- Ambient Background -->
+
+<!-- 3D Scene Background -->
+<!-- STITCH_THREEJS_START:ANIMATION_7 class="fixed inset-0 w-full h-full pointer-events-none z-[-1] bg-transparent" -->
+<div class="fixed inset-0 w-full h-full pointer-events-none z-[-1] bg-transparent" style="display:block;">
+<script src="https://ajax.googleapis.com/ajax/libs/threejs/r125/three.min.js"></script>
+<div id="threejs-container-ANIMATION_7" style="width:100%;height:100%"><canvas width="1920" height="1657" style="display: block; width: 1280px; height: 1105px;"></canvas></div>
+<script>
+(function() {
+  const container = document.getElementById('threejs-container-ANIMATION_7');
+  const devicePixelRatio = window.devicePixelRatio || 1;
+  
+(function() {
+  const width = container.clientWidth || window.innerWidth;
+  const height = container.clientHeight || window.innerHeight;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+  camera.position.z = 8;
+
+  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  renderer.setSize(width, height);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  container.appendChild(renderer.domElement);
+
+  // Colors from GenAI Social Studio palette
+  const primaryColor = new THREE.Color('#10b981');
+  const secondaryColor = new THREE.Color('#051424');
+  const leafColor = new THREE.Color('#34d399');
+
+  // Ambient Light
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+  scene.add(ambientLight);
+
+  // Point Lights
+  const pointLight = new THREE.PointLight(primaryColor, 1.5);
+  pointLight.position.set(5, 5, 5);
+  scene.add(pointLight);
+
+  const pointLight2 = new THREE.PointLight(0x4aedc4, 1);
+  pointLight2.position.set(-5, -5, 2);
+  scene.add(pointLight2);
+
+  const group = new THREE.Group();
+  scene.add(group);
+
+  // Function to create a procedural "plant"
+  function createPlant(x, y, z, scale) {
+    const plantGroup = new THREE.Group();
+    
+    // Stem
+    const stemHeight = 2 + Math.random() * 2;
+    const stemGeom = new THREE.CylinderGeometry(0.05, 0.1, stemHeight, 8);
+    const stemMat = new THREE.MeshPhongMaterial({ color: primaryColor, shininess: 50 });
+    const stem = new THREE.Mesh(stemGeom, stemMat);
+    stem.position.y = stemHeight / 2;
+    plantGroup.add(stem);
+
+    // Leaves / Blooms
+    const numLeaves = 5 + Math.floor(Math.random() * 5);
+    for (let i = 0; i < numLeaves; i++) {
+      const leafGeom = new THREE.IcosahedronGeometry(0.3, 0);
+      const leafMat = new THREE.MeshPhongMaterial({ 
+        color: leafColor, 
+        wireframe: true,
+        transparent: true,
+        opacity: 0.6
+      });
+      const leaf = new THREE.Mesh(leafGeom, leafMat);
+      
+      const angle = (i / numLeaves) * Math.PI * 2;
+      const radius = 0.5 + Math.random() * 0.5;
+      leaf.position.x = Math.cos(angle) * radius;
+      leaf.position.z = Math.sin(angle) * radius;
+      leaf.position.y = (i / numLeaves) * stemHeight;
+      
+      leaf.rotation.x = Math.random() * Math.PI;
+      leaf.rotation.y = Math.random() * Math.PI;
+      
+      plantGroup.add(leaf);
+    }
+
+    plantGroup.position.set(x, y, z);
+    plantGroup.scale.set(scale, scale, scale);
+    
+    // Random sway parameters
+    plantGroup.userData = {
+      swaySpeed: 0.5 + Math.random() * 0.5,
+      swayAmount: 0.1 + Math.random() * 0.2,
+      offset: Math.random() * Math.PI * 2
+    };
+
+    return plantGroup;
+  }
+
+  const plants = [];
+  for (let i = 0; i < 12; i++) {
+    const x = (Math.random() - 0.5) * 20;
+    const y = -5 + Math.random() * 2;
+    const z = (Math.random() - 0.5) * 10;
+    const s = 0.5 + Math.random() * 1;
+    const p = createPlant(x, y, z, s);
+    group.add(p);
+    plants.push(p);
+  }
+
+  // Mouse interaction
+  let mouseX = 0;
+  let mouseY = 0;
+  window.addEventListener('mousemove', (e) => {
+    mouseX = (e.clientX / window.innerWidth) - 0.5;
+    mouseY = (e.clientY / window.innerHeight) - 0.5;
+  });
+
+  const clock = new THREE.Clock();
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const time = clock.getElapsedTime();
+
+    // Swaying animation
+    plants.forEach(p => {
+      p.rotation.z = Math.sin(time * p.userData.swaySpeed + p.userData.offset) * p.userData.swayAmount;
+      p.rotation.x = Math.cos(time * p.userData.swaySpeed * 0.5 + p.userData.offset) * (p.userData.swayAmount * 0.5);
+    });
+
+    // Group drift
+    group.rotation.y += (mouseX * 0.1 - group.rotation.y) * 0.05;
+    group.rotation.x += (mouseY * 0.05 - group.rotation.x) * 0.05;
+
+    renderer.render(scene, camera);
+  }
+
+  window.addEventListener('resize', () => {
+    const w = container.clientWidth || window.innerWidth;
+    const h = container.clientHeight || window.innerHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  });
+
+  animate();
+})();
+
+})();
+</script>
+</div>
+<!-- STITCH_THREEJS_END:ANIMATION_7 -->
+<!-- TopNavBar -->
+
+<!-- Main Content Canvas -->
+<main class="relative z-10 pb-32 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto min-h-screen flex flex-col items-center mt-unit-xl">
+<!-- Hero Section -->
+<div class="text-center mb-unit-xl animate-fade-up w-full max-w-4xl">
+<h1 class="font-display-lg text-display-lg text-on-surface mb-unit-sm">Cultivate your content in our <span class="text-primary">digital garden</span>.</h1>
+<p class="font-title-md text-title-md text-on-surface-variant max-w-2xl mx-auto">Input your core ideas, links, or media, and let the studio generate high-converting multimedia assets.</p>
+</div>
+<!-- The Studio Card (Bento/Glassmorphism Layout) -->
+<div class="glass-panel rounded-[24px] w-full max-w-5xl p-unit-lg md:p-unit-xl animate-fade-up delay-100 flex flex-col gap-unit-lg relative overflow-hidden">
+<!-- Light Leak Effect -->
+<div class="absolute top-0 left-0 w-64 h-64 bg-primary/20 rounded-full blur-[100px] pointer-events-none -translate-x-1/2 -translate-y-1/2"></div>
+<!-- Input Area -->
+<div class="flex flex-col gap-unit-sm">
+<div class="flex justify-between items-center mb-unit-xs">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase">Core Subject / Prompt</label>
+<div class="flex gap-2">
+<button class="text-on-surface-variant hover:text-primary transition-colors" title="Image">
+<span class="material-symbols-outlined" data-icon="image">image</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors" title="PDF">
+<span class="material-symbols-outlined" data-icon="picture_as_pdf">picture_as_pdf</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors" title="Video">
+<span class="material-symbols-outlined" data-icon="videocam">videocam</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors" title="Link">
+<span class="material-symbols-outlined" data-icon="link">link</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors" title="Audio">
+<span class="material-symbols-outlined" data-icon="mic">mic</span>
+</button>
+</div>
+</div>
+<div class="glass-modal rounded-xl emerald-glow-focus transition-all duration-300 relative group">
+<textarea class="w-full h-40 bg-transparent border-none text-on-surface focus:ring-0 resize-none p-4 font-body-lg" placeholder="Describe the content you want to generate, paste a link, or outline your key points..."></textarea>
+<div class="absolute bottom-2 right-2 text-on-surface-variant text-xs opacity-50 font-mono">0 / 2000</div>
+</div>
+</div>
+<!-- Intelligence Bar (Selectors) -->
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-unit-sm">
+<div class="glass-modal rounded-full h-12 flex items-center justify-between px-4 cursor-pointer hover:bg-white/10 transition-colors">
+<span class="font-body-sm text-on-surface truncate">Audience</span>
+<span class="material-symbols-outlined text-on-surface-variant text-sm" data-icon="expand_more">expand_more</span>
+</div>
+<div class="glass-modal rounded-full h-12 flex items-center justify-between px-4 cursor-pointer hover:bg-white/10 transition-colors border-primary/50 bg-primary/5">
+<span class="font-body-sm text-primary font-medium truncate">Professional</span>
+<span class="material-symbols-outlined text-primary text-sm" data-icon="expand_more">expand_more</span>
+</div>
+<div class="glass-modal rounded-full h-12 flex items-center justify-between px-4 cursor-pointer hover:bg-white/10 transition-colors">
+<span class="font-body-sm text-on-surface truncate">Language</span>
+<span class="material-symbols-outlined text-on-surface-variant text-sm" data-icon="expand_more">expand_more</span>
+</div>
+<div class="glass-modal rounded-full h-12 flex items-center justify-between px-4 cursor-pointer hover:bg-white/10 transition-colors">
+<span class="font-body-sm text-on-surface truncate">Detail Level</span>
+<span class="material-symbols-outlined text-on-surface-variant text-sm" data-icon="expand_more">expand_more</span>
+</div>
+<div class="glass-modal rounded-full h-12 flex items-center justify-between px-4 cursor-pointer hover:bg-white/10 transition-colors">
+<span class="font-body-sm text-on-surface truncate">Objective</span>
+<span class="material-symbols-outlined text-on-surface-variant text-sm" data-icon="expand_more">expand_more</span>
+</div>
+<div class="glass-modal rounded-full h-12 flex items-center justify-between px-4 cursor-pointer hover:bg-white/10 transition-colors">
+<span class="font-body-sm text-on-surface truncate">Style</span>
+<span class="material-symbols-outlined text-on-surface-variant text-sm" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+<!-- Output Formats Grid -->
+<div class="mt-unit-sm">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-unit-sm block">Desired Outputs</label>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-unit-md">
+<div class="glass-modal p-4 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer border-primary bg-primary/10 transition-all hover:-translate-y-1">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="movie" data-weight="fill">movie</span>
+<span class="font-body-sm text-on-surface font-medium text-center">Video Script</span>
+<div class="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary emerald-glow"></div>
+</div>
+<div class="glass-panel p-4 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all hover:bg-white/5 hover:-translate-y-1">
+<span class="material-symbols-outlined text-on-surface-variant text-3xl" data-icon="article">article</span>
+<span class="font-body-sm text-on-surface font-medium text-center">LinkedIn Article</span>
+</div>
+<div class="glass-modal p-4 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer border-primary bg-primary/10 transition-all hover:-translate-y-1">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="forum" data-weight="fill">forum</span>
+<span class="font-body-sm text-on-surface font-medium text-center">Twitter Thread</span>
+<div class="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary emerald-glow"></div>
+</div>
+<div class="glass-panel p-4 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all hover:bg-white/5 hover:-translate-y-1">
+<span class="material-symbols-outlined text-on-surface-variant text-3xl" data-icon="campaign">campaign</span>
+<span class="font-body-sm text-on-surface font-medium text-center">Ad Copy</span>
+</div>
+</div>
+</div>
+<!-- Generate Action -->
+<div class="mt-unit-md flex justify-end items-center gap-unit-md">
+<div class="text-on-surface-variant font-body-sm hidden md:flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="info">info</span>
+                    Estimated time: 15s
+                </div>
+<button class="bg-primary-container text-[#000000] font-title-md font-medium h-12 px-8 rounded-full flex items-center justify-center gap-2 hover:bg-surface-tint transition-colors shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)]">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+                    Generate Assets
+                </button>
+</div>
+</div>
+</main>
+
+
+</body></html>

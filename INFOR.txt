@@ -1,0 +1,45 @@
+++++++++++++++++++++++++++++++++++++++
+PROJECT SUMMARY
+++++++++++++++++++++++++++++++++++++++
+Project Gen AI Social is an AI-powered content transformation platform. It accepts diverse inputs (text, images, audio, video, PDFs) and processes them through a multi-stage AI pipeline to extract, moderate, and regenerate the content into beautifully formatted artifacts for various audiences and platforms.
+
+++++++++++++++++++++++++++++++++++++++
+AUTHENTICATION
+++++++++++++++++++++++++++++++++++++++
+Using Supabase for secure user authentication and management.
+
+++++++++++++++++++++++++++++++++++++++
+FRONTEND
+++++++++++++++++++++++++++++++++++++++
+Using Next.js Framework, Three.js, Tailwind CSS
+
+++++++++++++++++++++++++++++++++++++++
+BACKEND / API
+++++++++++++++++++++++++++++++++++++++
+Using FastAPI
+
+++++++++++++++++++++++++++++++++++++++
+INFRASTRUCTURE & DEPLOYMENT
+++++++++++++++++++++++++++++++++++++++
+- Serverless / Elastic GPU Architecture: The backend is designed to spin up GPU instances instantly when a user request comes in, and scale down to zero when idle, minimizing infrastructure costs while providing high performance when needed.
+
+++++++++++++++++++++++++++++++++++++++
+FILE EXTRACTION & ANALYSIS
+++++++++++++++++++++++++++++++++++++++
+- Images: Florence-2-base (for detailed visual extraction) & EasyOCR (for Hindi/English text extraction)
+- Video & Audio: OpenAI Whisper (base model) for accurate transcription
+- PDFs: PyMuPDF (fitz) for fast text extraction, with a PyTesseract OCR fallback for scanned documents
+
+++++++++++++++++++++++++++++++++++++++
+LOCAL LLM (Data Processing & Moderation)
+++++++++++++++++++++++++++++++++++++++
+Using Qwen3-4B-Instruct
+- Used to compress raw extraction data into structured JSON
+- Used as a content moderation gate to block abusive/violent inputs
+- Used to beautify and professionally format the final output
+
+++++++++++++++++++++++++++++++++++++++
+CLOUD LLM (Content Generation)
+++++++++++++++++++++++++++++++++++++++
+- Primary: Google Gemini (gemini-2.5-flash) via google-genai SDK
+- Fallback: Groq (llama3-70b-8192) used automatically if the Gemini API fails
