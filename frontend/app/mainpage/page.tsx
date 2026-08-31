@@ -886,7 +886,11 @@ export default function MainPage() {
                 scale: 1.18,
                 y: -3,
                 rotate: [0, -8, 8, 0],
-                transition: { type: "spring", stiffness: 450, damping: 14 },
+                transition: { 
+                  scale: { type: "spring", stiffness: 450, damping: 14 },
+                  y: { type: "spring", stiffness: 450, damping: 14 },
+                  rotate: { type: "tween", duration: 0.3 }
+                },
               }}
               whileTap={{ scale: 0.88, y: 0 }}
             >
