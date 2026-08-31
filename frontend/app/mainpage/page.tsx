@@ -41,7 +41,7 @@ const SELECTOR_DATA = {
     label: "Language",
     icon: "🌐",
     theme: "language",
-    options: ["English", "Hindi", "French"],
+    options: ["English", "Hindi"],
   },
   levelOfDetail: {
     label: "Level of Detail",
@@ -154,11 +154,11 @@ export const PlexusHero: React.FC = () => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let width = (canvas.width = window.innerWidth);
-    let height = (canvas.height = window.innerHeight);
+    let width = window.innerWidth;
+    let height = window.innerHeight;
 
-    const PARTICLE_COUNT = 85;
-    const MAX_DISTANCE = 170;
+    const PARTICLE_COUNT = 90;
+    const MAX_DISTANCE = 175;
     const FOV = 350;
 
     let mouseX = 0;
@@ -170,9 +170,15 @@ export const PlexusHero: React.FC = () => {
     let animationFrameId: number;
 
     const handleResize = () => {
-      if (!canvas) return;
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+      if (!canvas || !ctx) return;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -180,6 +186,7 @@ export const PlexusHero: React.FC = () => {
       mouseY = (e.clientY - height / 2) * 0.0005;
     };
 
+    handleResize();
     window.addEventListener("resize", handleResize);
     window.addEventListener("mousemove", handleMouseMove);
 
@@ -214,9 +221,9 @@ export const PlexusHero: React.FC = () => {
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (dist < MAX_DISTANCE) {
-            const alpha = (1 - dist / MAX_DISTANCE) * 0.35 * Math.min(p1.scale, p2.scale);
-            ctx.strokeStyle = `rgba(0, 242, 254, ${alpha})`;
-            ctx.lineWidth = 0.8 * Math.min(p1.scale, p2.scale);
+            const alpha = (1 - dist / MAX_DISTANCE) * 0.4 * Math.min(p1.scale, p2.scale);
+            ctx.strokeStyle = `rgba(45, 212, 191, ${alpha})`;
+            ctx.lineWidth = 0.9 * Math.min(p1.scale, p2.scale);
             ctx.beginPath();
             ctx.moveTo(p1.x, p1.y);
             ctx.lineTo(p2.x, p2.y);
@@ -228,10 +235,10 @@ export const PlexusHero: React.FC = () => {
       // Draw Glowing Nodes
       projected.forEach(({ data, proj }) => {
         if (proj.scale > 0) {
-          const radius = Math.max(1, 2.2 * proj.scale);
-          ctx.fillStyle = `rgba(${data.baseColor}, ${0.8 * proj.scale})`;
-          ctx.shadowBlur = 12;
-          ctx.shadowColor = `rgba(${data.baseColor}, 0.8)`;
+          const radius = Math.max(1.2, 2.5 * proj.scale);
+          ctx.fillStyle = `rgba(${data.baseColor}, ${0.85 * proj.scale})`;
+          ctx.shadowBlur = 14;
+          ctx.shadowColor = `rgba(${data.baseColor}, 0.9)`;
           ctx.beginPath();
           ctx.arc(proj.x, proj.y, radius, 0, Math.PI * 2);
           ctx.fill();
@@ -553,9 +560,6 @@ export default function MainPage() {
         </>
       )}
 
-      {/* ── Fixed 3D Plexus Background Canvas ── */}
-      <PlexusHero />
-
       {/* ── Animated Mesh / Aurora Gradient Background ── */}
       <div className="mp-aurora-container" aria-hidden="true">
         <div className="mp-aurora-blob blob-1" />
@@ -564,6 +568,9 @@ export default function MainPage() {
         <div className="mp-aurora-blob blob-4" />
         <div className="mp-aurora-overlay" />
       </div>
+
+      {/* ── Fixed 3D Plexus Background Canvas ── */}
+      <PlexusHero />
 
       {/* ── Header ── */}
       <header className="mp-header">
@@ -650,10 +657,10 @@ export default function MainPage() {
                       {file.type === "image"
                         ? "🖼️"
                         : file.type === "pdf"
-                        ? "📄"
-                        : file.type === "video"
-                        ? "🎬"
-                        : "🎙️"}
+                          ? "📄"
+                          : file.type === "video"
+                            ? "🎬"
+                            : "🎙️"}
                     </motion.span>
                     <span className="mp-attach-filename">{file.name}</span>
                     <motion.button
@@ -918,32 +925,32 @@ export default function MainPage() {
                 whileHover={
                   chip.theme === "launch"
                     ? {
-                        scale: 1.5,
-                        x: [0, 3, 5, 2, 0],
-                        y: [0, -5, -8, -3, 0],
-                        rotate: [0, -16, -24, -12, 0],
-                        transition: { duration: 0.45, ease: "easeOut" },
-                      }
+                      scale: 1.5,
+                      x: [0, 3, 5, 2, 0],
+                      y: [0, -5, -8, -3, 0],
+                      rotate: [0, -16, -24, -12, 0],
+                      transition: { duration: 0.45, ease: "easeOut" },
+                    }
                     : chip.theme === "linkedin"
-                    ? {
+                      ? {
                         scale: 1.45,
                         rotate: [0, -18, 18, -10, 6, 0],
                         y: -3,
                         transition: { duration: 0.45, ease: "easeOut" },
                       }
-                    : chip.theme === "carousel"
-                    ? {
-                        scale: 1.45,
-                        rotate: [0, 18, -16, 10, 0],
-                        y: -3,
-                        transition: { duration: 0.45, ease: "easeOut" },
-                      }
-                    : {
-                        scale: 1.45,
-                        y: [0, -5, 2, -3, 0],
-                        rotate: [0, -12, 12, 0],
-                        transition: { duration: 0.45, ease: "easeOut" },
-                      }
+                      : chip.theme === "carousel"
+                        ? {
+                          scale: 1.45,
+                          rotate: [0, 18, -16, 10, 0],
+                          y: -3,
+                          transition: { duration: 0.45, ease: "easeOut" },
+                        }
+                        : {
+                          scale: 1.45,
+                          y: [0, -5, 2, -3, 0],
+                          rotate: [0, -12, 12, 0],
+                          transition: { duration: 0.45, ease: "easeOut" },
+                        }
                 }
               >
                 {chip.icon}
@@ -963,9 +970,8 @@ export default function MainPage() {
             return (
               <div key={key} style={{ position: "relative" }}>
                 <motion.button
-                  className={`mp-selector-trigger ${isOpen ? "active" : ""} ${
-                    selectedValue ? "has-value" : ""
-                  }`}
+                  className={`mp-selector-trigger ${isOpen ? "active" : ""} ${selectedValue ? "has-value" : ""
+                    }`}
                   onClick={() => toggleSelector(key)}
                   whileHover={{ y: -3, scale: 1.04 }}
                   whileTap={{ scale: 0.94 }}
@@ -1014,9 +1020,8 @@ export default function MainPage() {
                         {data.options.map((option) => (
                           <motion.button
                             key={option}
-                            className={`mp-popup-option ${
-                              selectedValue === option ? "selected" : ""
-                            }`}
+                            className={`mp-popup-option ${selectedValue === option ? "selected" : ""
+                              }`}
                             onClick={() => {
                               selectOption(key, option);
                               setOpenSelector(null);
