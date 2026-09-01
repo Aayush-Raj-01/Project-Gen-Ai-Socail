@@ -35,7 +35,7 @@ GEMINI_MODEL = "gemini-2.5-flash"
 _groq_client = Groq(
     api_key=os.getenv("GROQ_API_KEY")
 )
-GROQ_MODEL = "llama3-70b-8192"
+GROQ_MODEL = "llama-3.1-70b-versatile"
 
 # ---------------------------------------------------------------------------
 # Hardcoded prompt — keeps Gemini output minimal
@@ -61,7 +61,7 @@ Rules:
 # Public API
 # ---------------------------------------------------------------------------
 
-def generate_from_compressed_json(compressed_json: str, desired_outputs: list = None) -> str:
+def generate_from_compressed_json(compressed_json: str) -> str:
     """
     Send compressed JSON to Gemini and return the concise output.
 
@@ -70,17 +70,11 @@ def generate_from_compressed_json(compressed_json: str, desired_outputs: list = 
 
     Args:
         compressed_json: Structured JSON string from Qwen compression.
-        desired_outputs: List of specific output formats requested by the user.
 
     Returns:
-        Concise text output from Gemini.
+        Concise, factual text output from Gemini.
     """
-    output_instructions = ""
-    if desired_outputs and len(desired_outputs) > 0:
-        formats = ", ".join(desired_outputs)
-        output_instructions = f"\nCRITICAL INSTRUCTION: You MUST generate the output EXACTLY in these formats: {formats}.\nGenerate EACH format as a separate distinct section. DO NOT use conversational filler like 'Here is your post'."
-    else:
-        output_instructions = "\nGenerate a comprehensive analysis based on the structured data above. Be concise and factual."
+    output_instructions = "\nGenerate a comprehensive analysis based on the structured data above. Be concise and factual. Do not format for a specific output type; just output the raw knowledge base."
 
     prompt = f"""{GEMINI_SYSTEM_PROMPT}
 
@@ -91,8 +85,10 @@ Input JSON:
 
     print("[gemini_service] Sending compressed JSON to Gemini ...")
 
+    client = _get_client()
+
     try:
-        response = _client.models.generate_content(
+        response = client.models.generate_content(
             model=GEMINI_MODEL,
             contents=prompt,
         )
@@ -102,12 +98,21 @@ Input JSON:
     except Exception as e:
         print(f"[gemini_service] Gemini failed: {e}. Falling back to Groq API...")
         
-        chat_completion = _groq_client.chat.completions.create(
-            messages=[
-                {"role": "user", "content": prompt}
-            ],
-            model=GROQ_MODEL,
-        )
+        try:
+            chat_completion = _groq_client.chat.completions.create(
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                model="llama-3.3-70b-versatile",
+            )
+        except Exception as groq_e:
+            print(f"[gemini_service] Groq 3.3-70b failed: {groq_e}. Trying llama3-8b-8192...")
+            chat_completion = _groq_client.chat.completions.create(
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                model="llama3-8b-8192",
+            )
         
         print("[gemini_service] Groq response received.")
         return chat_completion.choices[0].message.content

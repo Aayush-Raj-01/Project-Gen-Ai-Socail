@@ -42,19 +42,26 @@ Preserve:
 
 Return ONLY valid JSON."""
 
-BEAUTIFICATION_SYSTEM_PROMPT = """Rewrite professionally.
+FORMATTING_SYSTEM_PROMPT = """You are an expert content formatter.
 
-Preserve every fact.
+Your task is to take a generic knowledge base and format it into SPECIFIC output types requested by the user.
+If multiple output types are requested, output each as a distinct section starting exactly with '### [Format Name]'.
+Do not invent information. Rely strictly on the provided content. Improve grammar and readability.
 
-Improve:
-- readability
-- structure
-- grammar
-- formatting
-
-Do not invent information.
-Do not remove facts.
-Do not add assumptions."""
+CRITICAL STRUCTURAL RULES:
+- For 'Presentation' or 'ppt', you MUST format it as:
+#### Slide 1
+**Title:** ...
+**Content:** ...
+#### Slide 2
+...
+- For 'Video Script' or 'video script', you MUST format it as:
+#### Scene 1
+**Visual:** ...
+**Audio:** ...
+#### Scene 2
+...
+- For all other formats, use standard paragraphs or bullet points."""
 
 MODERATION_SYSTEM_PROMPT = """You are a content moderation classifier.
 
@@ -262,50 +269,54 @@ TEXT:
     return json.dumps(aggregated)
 
 
-def beautify_output(gemini_output: str) -> str:
+def format_outputs(gemini_output: str, desired_outputs: list = None) -> str:
     """
-    STAGE 3: Reformat Gemini's raw output into polished, readable prose.
-
-    Preserves all facts while improving structure, grammar, and readability.
+    STAGE 3: Format Gemini's raw output into specific requested structures using local LLM.
 
     Args:
         gemini_output: Raw text returned by Gemini.
+        desired_outputs: List of specific formats (e.g., ["Script", "PDF", "Report"]).
 
     Returns:
-        Professionally formatted text.
+        Formatted text containing distinct sections for each output type.
     """
     chunks = _chunk_text(gemini_output, max_tokens=2048)
 
-    if len(chunks) == 1:
-        user_prompt = f"""Rewrite the following content into a professional, well-structured response.
+    formatting_instructions = "Rewrite the following content into a professional, well-structured response."
+    if desired_outputs and len(desired_outputs) > 0:
+        formats = ", ".join(desired_outputs)
+        formatting_instructions = f"CRITICAL INSTRUCTION: You MUST format the content EXACTLY into these types: {formats}. Generate EACH format as a separate distinct section with a clear heading (e.g., '### [Format Name]')."
 
-Keep all facts intact. Improve readability and formatting.
+    if len(chunks) == 1:
+        user_prompt = f"""{formatting_instructions}
+
+Keep all facts intact. Improve readability and structure.
 
 CONTENT:
 
 {gemini_output}"""
 
-        print("[llm] Running Qwen beautification ...")
-        result = _generate(BEAUTIFICATION_SYSTEM_PROMPT, user_prompt, max_new_tokens=2048)
-        print("[llm] Beautification complete.")
+        print("[llm] Running Qwen formatting ...")
+        result = _generate(FORMATTING_SYSTEM_PROMPT, user_prompt, max_new_tokens=2048)
+        print("[llm] Formatting complete.")
         return result
 
-    print(f"[llm] Output is large. Splitting into {len(chunks)} chunks for beautification.")
+    print(f"[llm] Output is large. Splitting into {len(chunks)} chunks for formatting.")
     results = []
     for i, chunk in enumerate(chunks):
-        print(f"[llm] Beautifying chunk {i+1}/{len(chunks)} ...")
-        user_prompt = f"""Rewrite the following content into a professional, well-structured response.
+        print(f"[llm] Formatting chunk {i+1}/{len(chunks)} ...")
+        user_prompt = f"""{formatting_instructions}
 
-Keep all facts intact. Improve readability and formatting.
+Keep all facts intact. Improve readability and structure.
 
 CONTENT:
 
 {chunk}"""
-        res = _generate(BEAUTIFICATION_SYSTEM_PROMPT, user_prompt, max_new_tokens=2048)
+        res = _generate(FORMATTING_SYSTEM_PROMPT, user_prompt, max_new_tokens=2048)
         results.append(res)
         
-    print("[llm] Chunk beautification complete.")
-    return "\n\n".join(results)
+    print("[llm] Chunk formatting complete.")
+    return "\n\n---\n\n".join(results)
 
 
 def moderate_content(text: str) -> dict:
