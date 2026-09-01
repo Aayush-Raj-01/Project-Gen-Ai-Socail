@@ -504,10 +504,34 @@ export default function MainPage() {
                 <div key={sIdx} className="mp-slide-card">
                   <div className="mp-slide-content">
                     {slide.split("\n").map((l, i) => {
-                      if (l.startsWith("#### ")) return <h4 key={i} className="slide-heading">{l.replace("#### ", "")}</h4>;
-                      if (l.startsWith("**Title:**")) return <div key={i} className="slide-title">{l.replace("**Title:**", "").trim()}</div>;
-                      if (l.startsWith("**Content:**")) return <div key={i} className="slide-body">{l.replace("**Content:**", "").trim()}</div>;
-                      return l.trim() ? <p key={i}>{l}</p> : null;
+                      const text = l.trim();
+                      if (!text) return null;
+                      if (text.startsWith("#### ")) return <h4 key={i} className="slide-heading">{text.replace("#### ", "")}</h4>;
+                      if (text.startsWith("**Title:**")) return <div key={i} className="slide-title">{text.replace("**Title:**", "").trim()}</div>;
+                      if (text.startsWith("**Content:**")) {
+                          const contentText = text.replace("**Content:**", "").trim();
+                          if (!contentText) return null;
+                          return <div key={i} className="slide-body" style={{ marginBottom: "8px" }}>{contentText}</div>;
+                      }
+                      
+                      const isBullet = text.startsWith("- ") || text.startsWith("* ") || text.startsWith("# ") || text === "#";
+                      const cleanText = isBullet ? text.replace(/^[-*#]\s*/, "").trim() : text;
+                      if (!cleanText && isBullet) return null; // Ignore standalone bullet without text
+
+                      const parts = cleanText.split(/(\*\*.*?\*\*)/g);
+                      return (
+                        <div key={i} className={`slide-text ${isBullet ? 'slide-bullet' : ''}`} style={{ display: 'flex', gap: '8px', marginBottom: '6px', lineHeight: '1.5' }}>
+                          {isBullet && <span className="bullet-icon" style={{ color: '#2DD4BF', marginTop: '1px' }}>•</span>}
+                          <div style={{ color: '#E4E4E7' }}>
+                            {parts.map((part, pIdx) => {
+                              if (part.startsWith("**") && part.endsWith("**")) {
+                                return <strong key={pIdx} style={{ color: '#FFFFFF', fontWeight: '600' }}>{part.slice(2, -2)}</strong>;
+                              }
+                              return part;
+                            })}
+                          </div>
+                        </div>
+                      );
                     })}
                   </div>
                 </div>
@@ -534,8 +558,8 @@ export default function MainPage() {
                   <div key={sIdx} className="mp-scene-row">
                     <div className="mp-scene-header">{sceneTitle}</div>
                     <div className="mp-scene-split">
-                      <div className="mp-scene-col visual-col"><strong>👁️ Visual</strong><p>{visual}</p></div>
-                      <div className="mp-scene-col audio-col"><strong>🔊 Audio</strong><p>{audio}</p></div>
+                      <div className="mp-scene-col visual-col"><p>{visual}</p></div>
+                      <div className="mp-scene-col audio-col"><p>{audio}</p></div>
                     </div>
                   </div>
                 );
@@ -1247,7 +1271,7 @@ export default function MainPage() {
                   >
                     ⚡
                   </motion.span>
-                  <span className="mp-result-title">Pipeline Output</span>
+                  <span className="mp-result-title">Formatted Content Outputs</span>
                   <span className="mp-result-badge">AI Generated</span>
                 </div>
                 {Boolean(response.final_output) && (
@@ -1265,184 +1289,12 @@ export default function MainPage() {
               {/* Final Output */}
               {Boolean(response.final_output) && (
                 <div className="mp-result-section">
-                  <div className="mp-section-tag">
-                    <motion.span
-                      className="mp-icon-badge mp-tag-icon-badge badge-final"
-                      whileHover={{
-                        scale: 1.45,
-                        rotate: [0, -18, 18, -6, 0],
-                        y: -2,
-                        transition: { duration: 0.4, ease: "easeOut" },
-                      }}
-                      whileTap={{ scale: 0.88 }}
-                    >
-                      🎯
-                    </motion.span>
-                    <span>Formatted Content Outputs</span>
-                  </div>
                   <div className="mp-formatted-outputs-container">
                     {renderFormattedOutputs(String(response.final_output))}
                   </div>
                 </div>
               )}
 
-              {/* Image Analysis */}
-              {Boolean(response.image_analysis) && (
-                <div className="mp-result-section">
-                  <div className="mp-section-tag">
-                    <motion.span
-                      className="mp-icon-badge mp-tag-icon-badge badge-vision"
-                      whileHover={{
-                        scale: 1.45,
-                        rotate: [0, -16, 16, 0],
-                        y: -2,
-                        transition: { duration: 0.4, ease: "easeOut" },
-                      }}
-                      whileTap={{ scale: 0.88 }}
-                    >
-                      🖼️
-                    </motion.span>
-                    <span>Vision & OCR Breakdown</span>
-                  </div>
-                  <div className="mp-vision-box">
-                    {String((response.image_analysis as Record<string, unknown>).image_description || "")}
-                  </div>
-                  {Boolean((response.image_analysis as Record<string, unknown>).ocr_text) && (
-                    <div className="mp-ocr-box">
-                      <strong>Extracted Text (OCR):</strong> {String((response.image_analysis as Record<string, unknown>).ocr_text)}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Video Analysis */}
-              {Boolean(response.video_analysis) && (
-                <div className="mp-result-section">
-                  <div className="mp-section-tag">
-                    <motion.span
-                      className="mp-icon-badge mp-tag-icon-badge badge-video"
-                      whileHover={{
-                        scale: 1.45,
-                        rotate: [0, 18, -16, 0],
-                        y: -2,
-                        transition: { duration: 0.4, ease: "easeOut" },
-                      }}
-                      whileTap={{ scale: 0.88 }}
-                    >
-                      🎬
-                    </motion.span>
-                    <span>Video Analysis</span>
-                  </div>
-                  <div className="mp-vision-box">
-                    <strong>Language:</strong> {String((response.video_analysis as Record<string, unknown>).language || "unknown")}
-                    <div style={{ marginTop: 8 }}>
-                      <strong>Transcription:</strong> {String((response.video_analysis as Record<string, unknown>).transcription || "None")}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Audio Analysis */}
-              {Boolean(response.audio_analysis) && (
-                <div className="mp-result-section">
-                  <div className="mp-section-tag">
-                    <motion.span
-                      className="mp-icon-badge mp-tool-icon-badge badge-audio"
-                      whileHover={{
-                        scale: 1.45,
-                        y: [0, -4, 2, 0],
-                        rotate: [0, -15, 15, 0],
-                        transition: { duration: 0.4, ease: "easeOut" },
-                      }}
-                      whileTap={{ scale: 0.88 }}
-                    >
-                      🎙️
-                    </motion.span>
-                    <span>Audio Analysis</span>
-                  </div>
-                  <div className="mp-ocr-box">
-                    <strong>Language:</strong> {String((response.audio_analysis as Record<string, unknown>).language || "unknown")}
-                    <div style={{ marginTop: 8 }}>
-                      <strong>Transcription:</strong> {String((response.audio_analysis as Record<string, unknown>).transcription || "None")}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* PDF Analysis */}
-              {Boolean(response.pdf_analysis) && (
-                <div className="mp-result-section">
-                  <div className="mp-section-tag">
-                    <motion.span
-                      className="mp-icon-badge mp-tag-icon-badge badge-vision"
-                      whileHover={{
-                        scale: 1.45,
-                        y: [0, -4, 2, 0],
-                        rotate: [0, -14, 14, 0],
-                        transition: { duration: 0.4, ease: "easeOut" },
-                      }}
-                      whileTap={{ scale: 0.88 }}
-                    >
-                      📄
-                    </motion.span>
-                    <span>PDF Analysis</span>
-                  </div>
-                  <div className="mp-vision-box">
-                    <strong>Pages:</strong> {String((response.pdf_analysis as Record<string, unknown>).page_count || 0)} | <strong>Method:</strong> {String((response.pdf_analysis as Record<string, unknown>).method || "unknown")}
-                    <div style={{ marginTop: 8 }}>
-                      <strong>Extracted Text:</strong> {String((response.pdf_analysis as Record<string, unknown>).extracted_text || "None")}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Gemini Output */}
-              {Boolean(response.gemini_output) && (
-                <details className="mp-details-toggle">
-                  <summary className="mp-details-summary">
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <motion.span
-                        className="mp-icon-badge badge-audience"
-                        style={{ width: "20px", height: "20px", fontSize: "11px" }}
-                        whileHover={{ scale: 1.45, rotate: [0, -18, 18, 0] }}
-                        whileTap={{ scale: 0.88 }}
-                      >
-                        🧠
-                      </motion.span>
-                      <span>Gemini Model Output</span>
-                    </div>
-                    <span style={{ fontSize: "11px", color: "#94A3B8" }}>Click to expand ▼</span>
-                  </summary>
-                  <div className="mp-details-content">
-                    {String(response.gemini_output)}
-                  </div>
-                </details>
-              )}
-
-              {/* Compressed Data */}
-              {Boolean(response.compressed_data) && (
-                <details className="mp-details-toggle">
-                  <summary className="mp-details-summary">
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <motion.span
-                        className="mp-icon-badge badge-brief"
-                        style={{ width: "20px", height: "20px", fontSize: "11px" }}
-                        whileHover={{ scale: 1.45, y: [0, -4, 2, 0] }}
-                        whileTap={{ scale: 0.88 }}
-                      >
-                        📦
-                      </motion.span>
-                      <span>Compressed Knowledge Schema (JSON)</span>
-                    </div>
-                    <span style={{ fontSize: "11px", color: "#94A3B8" }}>Click to expand ▼</span>
-                  </summary>
-                  <div className="mp-details-content">
-                    <pre className="mp-json-box">
-                      {JSON.stringify(response.compressed_data, null, 2)}
-                    </pre>
-                  </div>
-                </details>
-              )}
             </motion.div>
           )}
         </AnimatePresence>
