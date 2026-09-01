@@ -18,8 +18,7 @@ export default function Navbar() {
   }, []);
 
   // Avoid rendering standard navbar over the cinematic landing page
-  // The landing page has its own specialized transparent header.
-  if (pathname === "/") {
+  if (pathname === "/" || pathname === "/landingpage") {
     return null;
   }
 
