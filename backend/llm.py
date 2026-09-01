@@ -42,19 +42,26 @@ Preserve:
 
 Return ONLY valid JSON."""
 
-BEAUTIFICATION_SYSTEM_PROMPT = """Rewrite professionally.
+FORMATTING_SYSTEM_PROMPT = """You are an expert content formatter.
 
-Preserve every fact.
+Your task is to take a generic knowledge base and format it into SPECIFIC output types requested by the user.
+If multiple output types are requested, output each as a distinct section starting exactly with '### [Format Name]'.
+Do not invent information. Rely strictly on the provided content. Improve grammar and readability.
 
-Improve:
-- readability
-- structure
-- grammar
-- formatting
-
-Do not invent information.
-Do not remove facts.
-Do not add assumptions."""
+CRITICAL STRUCTURAL RULES:
+- For 'Presentation' or 'ppt', you MUST format it as:
+#### Slide 1
+**Title:** ...
+**Content:** ...
+#### Slide 2
+...
+- For 'Video Script' or 'video script', you MUST format it as:
+#### Scene 1
+**Visual:** ...
+**Audio:** ...
+#### Scene 2
+...
+- For all other formats, use standard paragraphs or bullet points."""
 
 MODERATION_SYSTEM_PROMPT = """You are a content moderation classifier.
 
@@ -98,8 +105,28 @@ COMPRESSION_SCHEMA = {
 
 
 # ---------------------------------------------------------------------------
-# Internal generation helper
+# Internal generation helpers
 # ---------------------------------------------------------------------------
+
+def _chunk_text(text: str, max_tokens: int = 2000) -> list[str]:
+    """
+    Split text into chunks of at most max_tokens using the Qwen tokenizer.
+    Ensures that we don't exceed model context size or cause OOM errors.
+    """
+    tokenizer = get_qwen_tokenizer()
+    tokens = tokenizer.encode(text)
+    
+    if len(tokens) <= max_tokens:
+        return [text]
+        
+    chunks = []
+    for i in range(0, len(tokens), max_tokens):
+        chunk_tokens = tokens[i:i + max_tokens]
+        chunk_text = tokenizer.decode(chunk_tokens, skip_special_tokens=True)
+        chunks.append(chunk_text)
+        
+    return chunks
+
 
 def _generate(
     system_prompt: str,
@@ -167,7 +194,10 @@ def compress_to_json(raw_text: str, image_context: str = "") -> str:
     """
     schema_str = json.dumps(COMPRESSION_SCHEMA, indent=2)
 
-    user_prompt = f"""Extract all important information from the following text into this exact JSON schema:
+    chunks = _chunk_text(raw_text, max_tokens=2048)
+
+    if len(chunks) == 1:
+        user_prompt = f"""Extract all important information from the following text into this exact JSON schema:
 
 {schema_str}
 
@@ -177,38 +207,116 @@ TEXT:
 
 {raw_text}"""
 
-    print("[llm] Running Qwen compression ...")
-    result = _generate(COMPRESSION_SYSTEM_PROMPT, user_prompt, max_new_tokens=2048)
-    print("[llm] Compression complete.")
+        print("[llm] Running Qwen compression ...")
+        result = _generate(COMPRESSION_SYSTEM_PROMPT, user_prompt, max_new_tokens=2048)
+        print("[llm] Compression complete.")
+        return result
 
-    return result
+    print(f"[llm] Input text is large. Splitting into {len(chunks)} chunks for compression.")
+    
+    # Process chunks and aggregate
+    import copy
+    aggregated = copy.deepcopy(COMPRESSION_SCHEMA)
+    
+    for i, chunk in enumerate(chunks):
+        print(f"[llm] Processing compression chunk {i+1}/{len(chunks)} ...")
+        user_prompt = f"""Extract all important information from the following text into this exact JSON schema:
+
+{schema_str}
+
+Fill "image_context" with: {image_context if image_context else "N/A"}
+
+TEXT:
+
+{chunk}"""
+        
+        result_str = _generate(COMPRESSION_SYSTEM_PROMPT, user_prompt, max_new_tokens=2048)
+        
+        # Parse output
+        cleaned = result_str.strip()
+        if cleaned.startswith("```"):
+            lines = cleaned.split("\n")
+            lines = [l for l in lines if not l.strip().startswith("```")]
+            cleaned = "\n".join(lines).strip()
+            
+        try:
+            chunk_data = json.loads(cleaned)
+            # Aggregate lists and strings
+            for key, val in chunk_data.items():
+                if isinstance(val, list) and key in aggregated and isinstance(aggregated[key], list):
+                    aggregated[key].extend(val)
+                elif isinstance(val, str) and key in aggregated and isinstance(aggregated[key], str) and val:
+                    if not aggregated[key]:
+                        aggregated[key] = val
+                    else:
+                        aggregated[key] += f" {val}"
+        except json.JSONDecodeError:
+            print(f"[llm] WARNING: Failed to parse chunk {i+1} JSON. Skipping aggregation.")
+            
+    # Deduplicate lists
+    for key, val in aggregated.items():
+        if isinstance(val, list):
+            seen = set()
+            new_list = []
+            for item in val:
+                # use string representation to check for uniqueness
+                if str(item) not in seen:
+                    seen.add(str(item))
+                    new_list.append(item)
+            aggregated[key] = new_list
+            
+    print("[llm] Chunk compression complete.")
+    return json.dumps(aggregated)
 
 
-def beautify_output(gemini_output: str) -> str:
+def format_outputs(gemini_output: str, desired_outputs: list = None) -> str:
     """
-    STAGE 3: Reformat Gemini's raw output into polished, readable prose.
-
-    Preserves all facts while improving structure, grammar, and readability.
+    STAGE 3: Format Gemini's raw output into specific requested structures using local LLM.
 
     Args:
         gemini_output: Raw text returned by Gemini.
+        desired_outputs: List of specific formats (e.g., ["Script", "PDF", "Report"]).
 
     Returns:
-        Professionally formatted text.
+        Formatted text containing distinct sections for each output type.
     """
-    user_prompt = f"""Rewrite the following content into a professional, well-structured response.
+    chunks = _chunk_text(gemini_output, max_tokens=2048)
 
-Keep all facts intact. Improve readability and formatting.
+    formatting_instructions = "Rewrite the following content into a professional, well-structured response."
+    if desired_outputs and len(desired_outputs) > 0:
+        formats = ", ".join(desired_outputs)
+        formatting_instructions = f"CRITICAL INSTRUCTION: You MUST format the content EXACTLY into these types: {formats}. Generate EACH format as a separate distinct section with a clear heading (e.g., '### [Format Name]')."
+
+    if len(chunks) == 1:
+        user_prompt = f"""{formatting_instructions}
+
+Keep all facts intact. Improve readability and structure.
 
 CONTENT:
 
 {gemini_output}"""
 
-    print("[llm] Running Qwen beautification ...")
-    result = _generate(BEAUTIFICATION_SYSTEM_PROMPT, user_prompt, max_new_tokens=2048)
-    print("[llm] Beautification complete.")
+        print("[llm] Running Qwen formatting ...")
+        result = _generate(FORMATTING_SYSTEM_PROMPT, user_prompt, max_new_tokens=2048)
+        print("[llm] Formatting complete.")
+        return result
 
-    return result
+    print(f"[llm] Output is large. Splitting into {len(chunks)} chunks for formatting.")
+    results = []
+    for i, chunk in enumerate(chunks):
+        print(f"[llm] Formatting chunk {i+1}/{len(chunks)} ...")
+        user_prompt = f"""{formatting_instructions}
+
+Keep all facts intact. Improve readability and structure.
+
+CONTENT:
+
+{chunk}"""
+        res = _generate(FORMATTING_SYSTEM_PROMPT, user_prompt, max_new_tokens=2048)
+        results.append(res)
+        
+    print("[llm] Chunk formatting complete.")
+    return "\n\n---\n\n".join(results)
 
 
 def moderate_content(text: str) -> dict:
@@ -224,28 +332,37 @@ def moderate_content(text: str) -> dict:
         {"safe": True, "reason": ""} if content is clean.
         {"safe": False, "reason": "..."} if content is flagged.
     """
-    user_prompt = f"""Classify the following user input:
+    chunks = _chunk_text(text, max_tokens=2000)
 
-{text[:2000]}"""
+    print(f"[llm] Running content moderation (Chunks: {len(chunks)}) ...")
 
-    print("[llm] Running content moderation ...")
-    result = _generate(MODERATION_SYSTEM_PROMPT, user_prompt, max_new_tokens=128)
-    print(f"[llm] Moderation result: {result}")
+    for i, chunk in enumerate(chunks):
+        user_prompt = f"""Classify the following user input:
 
-    # Parse JSON response
-    try:
-        cleaned = result.strip()
-        if cleaned.startswith("```"):
-            lines = cleaned.split("\n")
-            lines = [l for l in lines if not l.strip().startswith("```")]
-            cleaned = "\n".join(lines).strip()
+{chunk}"""
 
-        parsed = json.loads(cleaned)
-        return {
-            "safe": bool(parsed.get("safe", True)),
-            "reason": str(parsed.get("reason", "")),
-        }
-    except (json.JSONDecodeError, KeyError):
-        # If parsing fails, default to safe (don't block legitimate content)
-        print("[llm] WARNING: Could not parse moderation response. Defaulting to safe.")
-        return {"safe": True, "reason": ""}
+        result = _generate(MODERATION_SYSTEM_PROMPT, user_prompt, max_new_tokens=128)
+        
+        try:
+            cleaned = result.strip()
+            if cleaned.startswith("```"):
+                lines = cleaned.split("\n")
+                lines = [l for l in lines if not l.strip().startswith("```")]
+                cleaned = "\n".join(lines).strip()
+
+            parsed = json.loads(cleaned)
+            is_safe = bool(parsed.get("safe", True))
+            
+            # If any chunk is unsafe, immediately return false
+            if not is_safe:
+                print(f"[llm] Moderation flagged unsafe content in chunk {i+1}: {parsed.get('reason', '')}")
+                return {
+                    "safe": False,
+                    "reason": str(parsed.get("reason", "")),
+                }
+                
+        except (json.JSONDecodeError, KeyError):
+            print(f"[llm] WARNING: Could not parse moderation response for chunk {i+1}. Defaulting to safe.")
+            
+    print("[llm] Moderation complete. Content is safe.")
+    return {"safe": True, "reason": ""}

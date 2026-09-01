@@ -16,7 +16,7 @@ import json
 import torch
 import gc
 from PIL import Image
-from moviepy.editor import VideoFileClip
+from moviepy import VideoFileClip
 from faster_whisper import WhisperModel
 from ultralytics import YOLO
 import easyocr

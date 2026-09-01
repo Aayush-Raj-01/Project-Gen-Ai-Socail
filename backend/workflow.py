@@ -29,7 +29,7 @@ from image_analyzer import analyze_image
 from video_analyzer import analyze_video, unload_video_analyzer
 from audio_analyzer import analyze_audio
 from pdf_analyzer import analyze_pdf
-from llm import compress_to_json, beautify_output, moderate_content
+from llm import compress_to_json, format_outputs, moderate_content
 from gemini_service import generate_from_compressed_json
 from load_models import unload_florence_model, unload_ocr_reader
 
@@ -137,8 +137,8 @@ def process_image(image_path: str, desired_outputs: list = None) -> dict:
     Steps:
         1. Analyze image  →  description + OCR + objects.
         2. Compress        →  structured JSON via Qwen.
-        3. Generate        →  concise output via Gemini.
-        4. Beautify        →  polished text via Qwen.
+        3. Generate        →  generic knowledge base via Gemini.
+        4. Format          →  specific output types via Qwen.
 
     Args:
         image_path: Path to the uploaded image file.
@@ -194,13 +194,13 @@ DETECTED OBJECTS:
     # ------------------------------------------------------------------
     print("[workflow] Step 3/4 — Gemini generation ...")
     compressed_json_str = json.dumps(compressed_data, ensure_ascii=False)
-    gemini_output = generate_from_compressed_json(compressed_json_str, desired_outputs)
+    gemini_output = generate_from_compressed_json(compressed_json_str)
 
     # ------------------------------------------------------------------
-    # Step 4: Qwen Beautification
+    # Step 4: Qwen Formatting
     # ------------------------------------------------------------------
-    print("[workflow] Step 4/4 — Qwen beautification ...")
-    final_output = beautify_output(gemini_output)
+    print("[workflow] Step 4/4 — Qwen formatting ...")
+    final_output = format_outputs(gemini_output, desired_outputs)
 
     # ------------------------------------------------------------------
     # Assemble response
@@ -229,8 +229,8 @@ def process_prompt(prompt_text: str, desired_outputs: list = None) -> dict:
 
     Steps:
         1. Compress        →  structured JSON via Qwen.
-        2. Generate        →  concise output via Gemini.
-        3. Beautify        →  polished text via Qwen.
+        2. Generate        →  generic knowledge base via Gemini.
+        3. Format          →  specific output types via Qwen.
 
     Args:
         prompt_text: The user's text prompt.
@@ -265,13 +265,13 @@ def process_prompt(prompt_text: str, desired_outputs: list = None) -> dict:
     # ------------------------------------------------------------------
     print("[workflow] Step 2/3 — Gemini generation ...")
     compressed_json_str = json.dumps(compressed_data, ensure_ascii=False)
-    gemini_output = generate_from_compressed_json(compressed_json_str, desired_outputs)
+    gemini_output = generate_from_compressed_json(compressed_json_str)
 
     # ------------------------------------------------------------------
-    # Step 3: Qwen Beautification
+    # Step 3: Qwen Formatting
     # ------------------------------------------------------------------
-    print("[workflow] Step 3/3 — Qwen beautification ...")
-    final_output = beautify_output(gemini_output)
+    print("[workflow] Step 3/3 — Qwen formatting ...")
+    final_output = format_outputs(gemini_output, desired_outputs)
 
     # ------------------------------------------------------------------
     # Assemble response
@@ -328,10 +328,10 @@ def process_video(video_path: str, desired_outputs: list = None) -> dict:
 
     print("[workflow] Step 3/4 — Gemini generation ...")
     compressed_json_str = json.dumps(compressed_data, ensure_ascii=False)
-    gemini_output = generate_from_compressed_json(compressed_json_str, desired_outputs)
+    gemini_output = generate_from_compressed_json(compressed_json_str)
 
-    print("[workflow] Step 4/4 — Qwen beautification ...")
-    final_output = beautify_output(gemini_output)
+    print("[workflow] Step 4/4 — Qwen formatting ...")
+    final_output = format_outputs(gemini_output, desired_outputs)
 
     response = {
         "video_analysis": video_data,
@@ -363,10 +363,10 @@ def process_audio(audio_path: str, desired_outputs: list = None) -> dict:
 
     print("[workflow] Step 3/4 — Gemini generation ...")
     compressed_json_str = json.dumps(compressed_data, ensure_ascii=False)
-    gemini_output = generate_from_compressed_json(compressed_json_str, desired_outputs)
+    gemini_output = generate_from_compressed_json(compressed_json_str)
 
-    print("[workflow] Step 4/4 — Qwen beautification ...")
-    final_output = beautify_output(gemini_output)
+    print("[workflow] Step 4/4 — Qwen formatting ...")
+    final_output = format_outputs(gemini_output, desired_outputs)
 
     response = {
         "audio_analysis": audio_data,
@@ -398,10 +398,10 @@ def process_pdf(pdf_path: str, desired_outputs: list = None) -> dict:
 
     print("[workflow] Step 3/4 — Gemini generation ...")
     compressed_json_str = json.dumps(compressed_data, ensure_ascii=False)
-    gemini_output = generate_from_compressed_json(compressed_json_str, desired_outputs)
+    gemini_output = generate_from_compressed_json(compressed_json_str)
 
-    print("[workflow] Step 4/4 — Qwen beautification ...")
-    final_output = beautify_output(gemini_output)
+    print("[workflow] Step 4/4 — Qwen formatting ...")
+    final_output = format_outputs(gemini_output, desired_outputs)
 
     response = {
         "pdf_analysis": pdf_data,

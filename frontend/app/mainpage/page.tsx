@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { SearchBar, type SearchResultItem } from "../components/SearchBar";
+
 import { NavyButton } from "../components/NavyButton";
 import "./mainpage.css";
 
@@ -73,6 +73,12 @@ const SELECTOR_DATA = {
       "Business-oriented",
       "Data-Driven",
     ],
+  },
+  outputType: {
+    label: "Output Type",
+    icon: "📄",
+    theme: "output",
+    options: ["ppt", "video script", "LinkedIn Post", "Twitter/X Post", "Advisory", "Infographic", "Executive Summary", "Presentation"],
   },
 } as const;
 
@@ -295,7 +301,7 @@ export default function MainPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [openSelector, setOpenSelector] = useState<SelectorKey | null>(null);
   const [selections, setSelections] = useState<
-    Partial<Record<SelectorKey, string>>
+    Partial<Record<SelectorKey, string | string[]>>
   >({});
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<Record<string, unknown> | null>(null);
@@ -336,45 +342,28 @@ export default function MainPage() {
   );
 
   const selectOption = useCallback((key: SelectorKey, option: string) => {
-    setSelections((prev) => ({
-      ...prev,
-      [key]: prev[key] === option ? undefined : option,
-    }));
+    setSelections((prev) => {
+      const current = prev[key];
+      if (key === "outputType") {
+        const currentArr = Array.isArray(current) ? current : (current ? [current as string] : []);
+        if (currentArr.includes(option)) {
+          const newArr = currentArr.filter(item => item !== option);
+          return { ...prev, [key]: newArr.length > 0 ? newArr : undefined };
+        } else {
+          return { ...prev, [key]: [...currentArr, option] };
+        }
+      }
+      return {
+        ...prev,
+        [key]: current === option ? undefined : option,
+      };
+    });
   }, []);
 
   const toggleRecording = useCallback(() => {
     setIsRecording((prev) => !prev);
   }, []);
 
-  const handleSearchResultSelect = useCallback((item: SearchResultItem) => {
-    if (item.category === "Templates") {
-      setPrompt((prev) =>
-        prev
-          ? `${prev}\n\n[Template: ${item.title}]`
-          : `Create a ${item.title} focusing on: `
-      );
-    } else if (item.id === "sel-tone-prof") {
-      setSelections((prev) => ({ ...prev, tone: "Professional" }));
-    } else if (item.id === "sel-tone-casual") {
-      setSelections((prev) => ({ ...prev, tone: "Casual" }));
-    } else if (item.id === "sel-audience-student") {
-      setSelections((prev) => ({ ...prev, targetAudience: "Student" }));
-    } else if (item.id === "sel-audience-exec") {
-      setSelections((prev) => ({ ...prev, targetAudience: "Executive" }));
-    } else if (item.id === "sel-audience-tech") {
-      setSelections((prev) => ({ ...prev, targetAudience: "Technical Team" }));
-    } else if (item.id === "tool-img") {
-      imageInputRef.current?.click();
-    } else if (item.id === "tool-ocr") {
-      pdfInputRef.current?.click();
-    } else if (item.id === "tool-voice") {
-      setIsRecording(true);
-    }
-  }, []);
-
-  const handleSearchSubmit = useCallback((query: string) => {
-    console.log("Search query submitted:", query);
-  }, []);
 
   const handleCopy = useCallback((text: string) => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -405,7 +394,7 @@ export default function MainPage() {
 
     // Assemble prompt text with user-selected preferences and reference link
     const activeSelections = Object.entries(selections)
-      .filter(([, val]) => Boolean(val))
+      .filter(([key, val]) => Boolean(val) && key !== "outputType")
       .map(([key, val]) => `${SELECTOR_DATA[key as SelectorKey]?.label || key}: ${val}`);
 
     let fullPrompt = prompt.trim();
@@ -418,6 +407,10 @@ export default function MainPage() {
         : `[Preferences: ${activeSelections.join(", ")}]`;
     }
 
+    const desiredOutputs = Array.isArray(selections.outputType) 
+      ? selections.outputType 
+      : (selections.outputType ? [selections.outputType] : []);
+
     try {
       let res: Response;
 
@@ -425,6 +418,7 @@ export default function MainPage() {
         const formData = new FormData();
         formData.append("file", fileToSend.file);
         if (fullPrompt) formData.append("prompt", fullPrompt);
+        if (desiredOutputs.length > 0) formData.append("desired_outputs", JSON.stringify(desiredOutputs));
 
         let endpoint = "http://localhost:8000/analyze-image";
         if (fileToSend.type === "video") endpoint = "http://localhost:8000/analyze-video";
@@ -439,7 +433,7 @@ export default function MainPage() {
         res = await fetch("http://localhost:8000/process-prompt", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: fullPrompt }),
+          body: JSON.stringify({ prompt: fullPrompt, desired_outputs: desiredOutputs.length > 0 ? desiredOutputs : undefined }),
         });
       }
 
@@ -460,6 +454,102 @@ export default function MainPage() {
       setIsLoading(false);
     }
   }, [attachedFiles, prompt, selections, linkValue]);
+
+  const renderFormattedOutputs = (rawText: string) => {
+    const sections = rawText.split(/(?=### )/).filter((s) => s.trim().length > 0);
+    return sections.map((section, idx) => {
+      const lines = section.split("\n");
+      const titleLine = lines[0].replace("### ", "").trim();
+      const content = lines.slice(1).join("\n").trim();
+      const titleLower = titleLine.toLowerCase();
+      const isPresentation = titleLower.includes("presentation") || titleLower.includes("ppt");
+      const isVideo = titleLower.includes("video");
+
+      if (isPresentation) {
+        const slides = content.split(/(?=#### Slide )/).filter((s) => s.trim().length > 0);
+        return (
+          <div key={idx} className="mp-custom-panel ppt-panel">
+            <h3 className="mp-panel-title">📊 {titleLine}</h3>
+            <div className="mp-slides-container">
+              {slides.map((slide, sIdx) => (
+                <div key={sIdx} className="mp-slide-card">
+                  <div className="mp-slide-content">
+                    {slide.split("\n").map((l, i) => {
+                      const text = l.trim();
+                      if (!text) return null;
+                      if (text.startsWith("#### ")) return <h4 key={i} className="slide-heading">{text.replace("#### ", "")}</h4>;
+                      if (text.startsWith("**Title:**")) return <div key={i} className="slide-title">{text.replace("**Title:**", "").trim()}</div>;
+                      if (text.startsWith("**Content:**")) {
+                          const contentText = text.replace("**Content:**", "").trim();
+                          if (!contentText) return null;
+                          return <div key={i} className="slide-body" style={{ marginBottom: "8px" }}>{contentText}</div>;
+                      }
+                      
+                      const isBullet = text.startsWith("- ") || text.startsWith("* ") || text.startsWith("# ") || text === "#";
+                      const cleanText = isBullet ? text.replace(/^[-*#]\s*/, "").trim() : text;
+                      if (!cleanText && isBullet) return null; // Ignore standalone bullet without text
+
+                      const parts = cleanText.split(/(\*\*.*?\*\*)/g);
+                      return (
+                        <div key={i} className={`slide-text ${isBullet ? 'slide-bullet' : ''}`} style={{ display: 'flex', gap: '8px', marginBottom: '6px', lineHeight: '1.5' }}>
+                          {isBullet && <span className="bullet-icon" style={{ color: '#2DD4BF', marginTop: '1px' }}>•</span>}
+                          <div style={{ color: '#E4E4E7' }}>
+                            {parts.map((part, pIdx) => {
+                              if (part.startsWith("**") && part.endsWith("**")) {
+                                return <strong key={pIdx} style={{ color: '#FFFFFF', fontWeight: '600' }}>{part.slice(2, -2)}</strong>;
+                              }
+                              return part;
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      } else if (isVideo) {
+        const scenes = content.split(/(?=#### Scene )/).filter((s) => s.trim().length > 0);
+        return (
+          <div key={idx} className="mp-custom-panel video-panel">
+            <h3 className="mp-panel-title">🎬 {titleLine}</h3>
+            <div className="mp-scenes-container">
+              {scenes.map((scene, sIdx) => {
+                let visual = "";
+                let audio = "";
+                let sceneTitle = "";
+                scene.split("\n").forEach((l) => {
+                  if (l.startsWith("#### ")) sceneTitle = l.replace("#### ", "");
+                  else if (l.startsWith("**Visual:**")) visual += l.replace("**Visual:**", "").trim() + " ";
+                  else if (l.startsWith("**Audio:**")) audio += l.replace("**Audio:**", "").trim() + " ";
+                });
+                return (
+                  <div key={sIdx} className="mp-scene-row">
+                    <div className="mp-scene-header">{sceneTitle}</div>
+                    <div className="mp-scene-split">
+                      <div className="mp-scene-col visual-col"><p>{visual}</p></div>
+                      <div className="mp-scene-col audio-col"><p>{audio}</p></div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      } else {
+        return (
+          <div key={idx} className="mp-custom-panel standard-panel">
+            <h3 className="mp-panel-title">📝 {titleLine}</h3>
+            <div className="mp-standard-content" style={{ whiteSpace: "pre-wrap" }}>
+              {content}
+            </div>
+          </div>
+        );
+      }
+    });
+  };
 
   const quickChips = [
     { label: "Viral Launch", icon: "🚀", theme: "launch", text: "Create a high-impact product launch announcement for: " },
@@ -560,6 +650,29 @@ export default function MainPage() {
         </>
       )}
 
+      {/* ── Loading Overlay ── */}
+      <AnimatePresence>
+        {isLoading && (
+          <motion.div
+            className="mp-loading-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="mp-loading-modal"
+              initial={{ scale: 0.8, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.8, y: 20, opacity: 0 }}
+            >
+              <div className="mp-spinner-ring"></div>
+              <h2>Generating Content</h2>
+              <p>The AI is analyzing and formatting your request...</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── Animated Mesh / Aurora Gradient Background ── */}
       <div className="mp-aurora-container" aria-hidden="true">
         <div className="mp-aurora-blob blob-1" />
@@ -591,13 +704,6 @@ export default function MainPage() {
           <span className="mp-logo-badge">Studio</span>
         </Link>
 
-        {/* ── Search Bar ── */}
-        <SearchBar
-          placeholder="Search templates, models, selectors..."
-          onSelectResult={handleSearchResultSelect}
-          onSearchSubmit={handleSearchSubmit}
-          className="mp-header-search"
-        />
 
         <div className="mp-header-actions">
           <Link href="/landingpage">
@@ -615,12 +721,18 @@ export default function MainPage() {
         {/* Soft Radial Glow for depth behind Hero Section */}
         <div className="mp-hero-radial-glow" />
 
-        <h1 className="mp-title">
-          Craft your content with a touch of{" "}
-          <span className="mp-title-highlight">intelligence</span>
-        </h1>
+        {!response && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <h1 className="mp-title">
+              Craft your content with a touch of{" "}
+              <span className="mp-title-highlight">intelligence</span>
+            </h1>
 
-        {/* ── Prompt Card ── */}
+            {/* ── Prompt Card ── */}
         <div className="mp-prompt-card">
           {/* Textarea */}
           <div className="mp-textarea-wrap">
@@ -886,14 +998,18 @@ export default function MainPage() {
 
             <motion.button
               className="mp-submit-btn"
-              disabled={isLoading || (attachedFiles.length === 0 && prompt.trim().length === 0)}
-              title="Generate with GenAI"
+              disabled={isLoading || (attachedFiles.length === 0 && prompt.trim().length === 0) || !selections.outputType || (Array.isArray(selections.outputType) ? selections.outputType.length === 0 : false)}
+              title={(!selections.outputType || (Array.isArray(selections.outputType) ? selections.outputType.length === 0 : false)) ? "Please select an Output Type" : "Generate with GenAI"}
               onClick={handleSubmit}
               whileHover={{
                 scale: 1.18,
                 y: -3,
                 rotate: [0, -8, 8, 0],
-                transition: { type: "spring", stiffness: 450, damping: 14 },
+                transition: { 
+                  scale: { type: "spring", stiffness: 450, damping: 14 },
+                  y: { type: "spring", stiffness: 450, damping: 14 },
+                  rotate: { type: "tween", duration: 0.3 }
+                },
               }}
               whileTap={{ scale: 0.88, y: 0 }}
             >
@@ -966,8 +1082,7 @@ export default function MainPage() {
             return (
               <div key={key} style={{ position: "relative" }}>
                 <motion.button
-                  className={`mp-selector-trigger ${isOpen ? "active" : ""} ${selectedValue ? "has-value" : ""
-                    }`}
+                  className={`mp-selector-trigger ${isOpen ? "active" : ""} ${selectedValue ? "has-value" : ""} ${key === "outputType" && (!selectedValue || (Array.isArray(selectedValue) && selectedValue.length === 0)) ? "highlight-required" : ""}`}
                   onClick={() => toggleSelector(key)}
                   whileHover={{ y: -3, scale: 1.04 }}
                   whileTap={{ scale: 0.94 }}
@@ -986,7 +1101,9 @@ export default function MainPage() {
                   </motion.span>
                   <span>{data.label}</span>
                   {selectedValue && (
-                    <span className="mp-selector-value">{selectedValue}</span>
+                    <span className="mp-selector-value">
+                      {Array.isArray(selectedValue) ? `${selectedValue.length} selected` : selectedValue}
+                    </span>
                   )}
                   <motion.span
                     className="mp-selector-chevron"
@@ -1013,22 +1130,26 @@ export default function MainPage() {
                         transition={{ type: "spring", stiffness: 450, damping: 25 }}
                       >
                         <div className="mp-popup-title">{data.label}</div>
-                        {data.options.map((option) => (
-                          <motion.button
-                            key={option}
-                            className={`mp-popup-option ${selectedValue === option ? "selected" : ""
-                              }`}
-                            onClick={() => {
-                              selectOption(key, option);
-                              setOpenSelector(null);
-                            }}
+                        {data.options.map((option) => {
+                          const isSelected = Array.isArray(selectedValue) ? selectedValue.includes(option) : selectedValue === option;
+                          return (
+                            <motion.button
+                              key={option}
+                              className={`mp-popup-option ${isSelected ? "selected" : ""}`}
+                              onClick={() => {
+                                selectOption(key, option);
+                                if (key !== "outputType") {
+                                  setOpenSelector(null);
+                                }
+                              }}
                             whileHover={{ x: 4 }}
                             whileTap={{ scale: 0.97 }}
                           >
                             <span className="mp-popup-option-dot" />
                             {option}
                           </motion.button>
-                        ))}
+                          );
+                        })}
                       </motion.div>
                     </>
                   )}
@@ -1037,6 +1158,8 @@ export default function MainPage() {
             );
           })}
         </div>
+        </motion.div>
+        )}
 
         {/* ── Error Message ── */}
         <AnimatePresence>
@@ -1112,7 +1235,7 @@ export default function MainPage() {
                   >
                     ⚡
                   </motion.span>
-                  <span className="mp-result-title">Pipeline Output</span>
+                  <span className="mp-result-title">Formatted Content Outputs</span>
                   <span className="mp-result-badge">AI Generated</span>
                 </div>
                 {Boolean(response.final_output) && (
@@ -1130,184 +1253,12 @@ export default function MainPage() {
               {/* Final Output */}
               {Boolean(response.final_output) && (
                 <div className="mp-result-section">
-                  <div className="mp-section-tag">
-                    <motion.span
-                      className="mp-icon-badge mp-tag-icon-badge badge-final"
-                      whileHover={{
-                        scale: 1.45,
-                        rotate: [0, -18, 18, -6, 0],
-                        y: -2,
-                        transition: { duration: 0.4, ease: "easeOut" },
-                      }}
-                      whileTap={{ scale: 0.88 }}
-                    >
-                      🎯
-                    </motion.span>
-                    <span>Final Polished Content</span>
-                  </div>
-                  <div className="mp-final-box">
-                    {String(response.final_output)}
+                  <div className="mp-formatted-outputs-container">
+                    {renderFormattedOutputs(String(response.final_output))}
                   </div>
                 </div>
               )}
 
-              {/* Image Analysis */}
-              {Boolean(response.image_analysis) && (
-                <div className="mp-result-section">
-                  <div className="mp-section-tag">
-                    <motion.span
-                      className="mp-icon-badge mp-tag-icon-badge badge-vision"
-                      whileHover={{
-                        scale: 1.45,
-                        rotate: [0, -16, 16, 0],
-                        y: -2,
-                        transition: { duration: 0.4, ease: "easeOut" },
-                      }}
-                      whileTap={{ scale: 0.88 }}
-                    >
-                      🖼️
-                    </motion.span>
-                    <span>Vision & OCR Breakdown</span>
-                  </div>
-                  <div className="mp-vision-box">
-                    {String((response.image_analysis as Record<string, unknown>).image_description || "")}
-                  </div>
-                  {Boolean((response.image_analysis as Record<string, unknown>).ocr_text) && (
-                    <div className="mp-ocr-box">
-                      <strong>Extracted Text (OCR):</strong> {String((response.image_analysis as Record<string, unknown>).ocr_text)}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Video Analysis */}
-              {Boolean(response.video_analysis) && (
-                <div className="mp-result-section">
-                  <div className="mp-section-tag">
-                    <motion.span
-                      className="mp-icon-badge mp-tag-icon-badge badge-video"
-                      whileHover={{
-                        scale: 1.45,
-                        rotate: [0, 18, -16, 0],
-                        y: -2,
-                        transition: { duration: 0.4, ease: "easeOut" },
-                      }}
-                      whileTap={{ scale: 0.88 }}
-                    >
-                      🎬
-                    </motion.span>
-                    <span>Video Analysis</span>
-                  </div>
-                  <div className="mp-vision-box">
-                    <strong>Language:</strong> {String((response.video_analysis as Record<string, unknown>).language || "unknown")}
-                    <div style={{ marginTop: 8 }}>
-                      <strong>Transcription:</strong> {String((response.video_analysis as Record<string, unknown>).transcription || "None")}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Audio Analysis */}
-              {Boolean(response.audio_analysis) && (
-                <div className="mp-result-section">
-                  <div className="mp-section-tag">
-                    <motion.span
-                      className="mp-icon-badge mp-tool-icon-badge badge-audio"
-                      whileHover={{
-                        scale: 1.45,
-                        y: [0, -4, 2, 0],
-                        rotate: [0, -15, 15, 0],
-                        transition: { duration: 0.4, ease: "easeOut" },
-                      }}
-                      whileTap={{ scale: 0.88 }}
-                    >
-                      🎙️
-                    </motion.span>
-                    <span>Audio Analysis</span>
-                  </div>
-                  <div className="mp-ocr-box">
-                    <strong>Language:</strong> {String((response.audio_analysis as Record<string, unknown>).language || "unknown")}
-                    <div style={{ marginTop: 8 }}>
-                      <strong>Transcription:</strong> {String((response.audio_analysis as Record<string, unknown>).transcription || "None")}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* PDF Analysis */}
-              {Boolean(response.pdf_analysis) && (
-                <div className="mp-result-section">
-                  <div className="mp-section-tag">
-                    <motion.span
-                      className="mp-icon-badge mp-tag-icon-badge badge-vision"
-                      whileHover={{
-                        scale: 1.45,
-                        y: [0, -4, 2, 0],
-                        rotate: [0, -14, 14, 0],
-                        transition: { duration: 0.4, ease: "easeOut" },
-                      }}
-                      whileTap={{ scale: 0.88 }}
-                    >
-                      📄
-                    </motion.span>
-                    <span>PDF Analysis</span>
-                  </div>
-                  <div className="mp-vision-box">
-                    <strong>Pages:</strong> {String((response.pdf_analysis as Record<string, unknown>).page_count || 0)} | <strong>Method:</strong> {String((response.pdf_analysis as Record<string, unknown>).method || "unknown")}
-                    <div style={{ marginTop: 8 }}>
-                      <strong>Extracted Text:</strong> {String((response.pdf_analysis as Record<string, unknown>).extracted_text || "None")}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Gemini Output */}
-              {Boolean(response.gemini_output) && (
-                <details className="mp-details-toggle">
-                  <summary className="mp-details-summary">
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <motion.span
-                        className="mp-icon-badge badge-audience"
-                        style={{ width: "20px", height: "20px", fontSize: "11px" }}
-                        whileHover={{ scale: 1.45, rotate: [0, -18, 18, 0] }}
-                        whileTap={{ scale: 0.88 }}
-                      >
-                        🧠
-                      </motion.span>
-                      <span>Gemini Model Output</span>
-                    </div>
-                    <span style={{ fontSize: "11px", color: "#94A3B8" }}>Click to expand ▼</span>
-                  </summary>
-                  <div className="mp-details-content">
-                    {String(response.gemini_output)}
-                  </div>
-                </details>
-              )}
-
-              {/* Compressed Data */}
-              {Boolean(response.compressed_data) && (
-                <details className="mp-details-toggle">
-                  <summary className="mp-details-summary">
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <motion.span
-                        className="mp-icon-badge badge-brief"
-                        style={{ width: "20px", height: "20px", fontSize: "11px" }}
-                        whileHover={{ scale: 1.45, y: [0, -4, 2, 0] }}
-                        whileTap={{ scale: 0.88 }}
-                      >
-                        📦
-                      </motion.span>
-                      <span>Compressed Knowledge Schema (JSON)</span>
-                    </div>
-                    <span style={{ fontSize: "11px", color: "#94A3B8" }}>Click to expand ▼</span>
-                  </summary>
-                  <div className="mp-details-content">
-                    <pre className="mp-json-box">
-                      {JSON.stringify(response.compressed_data, null, 2)}
-                    </pre>
-                  </div>
-                </details>
-              )}
             </motion.div>
           )}
         </AnimatePresence>

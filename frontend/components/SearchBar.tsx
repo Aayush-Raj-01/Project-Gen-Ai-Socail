@@ -31,7 +31,7 @@ const SEARCHABLE_DATABASE: SearchResultItem[] = [
   },
   {
     id: "tool-llm",
-    title: "Qwen3-4B Instruct LLM",
+    title: "Gemma-3-4B Instruct LLM",
     category: "Tools & AI",
     description: "Generate structured social content using local LLM engine.",
     icon: "🤖",
