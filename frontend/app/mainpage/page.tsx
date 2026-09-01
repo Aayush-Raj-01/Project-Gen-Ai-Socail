@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { SearchBar, type SearchResultItem } from "../components/SearchBar";
+
 import { NavyButton } from "../components/NavyButton";
 import "./mainpage.css";
 
@@ -364,35 +364,6 @@ export default function MainPage() {
     setIsRecording((prev) => !prev);
   }, []);
 
-  const handleSearchResultSelect = useCallback((item: SearchResultItem) => {
-    if (item.category === "Templates") {
-      setPrompt((prev) =>
-        prev
-          ? `${prev}\n\n[Template: ${item.title}]`
-          : `Create a ${item.title} focusing on: `
-      );
-    } else if (item.id === "sel-tone-prof") {
-      setSelections((prev) => ({ ...prev, tone: "Professional" }));
-    } else if (item.id === "sel-tone-casual") {
-      setSelections((prev) => ({ ...prev, tone: "Casual" }));
-    } else if (item.id === "sel-audience-student") {
-      setSelections((prev) => ({ ...prev, targetAudience: "Student" }));
-    } else if (item.id === "sel-audience-exec") {
-      setSelections((prev) => ({ ...prev, targetAudience: "Executive" }));
-    } else if (item.id === "sel-audience-tech") {
-      setSelections((prev) => ({ ...prev, targetAudience: "Technical Team" }));
-    } else if (item.id === "tool-img") {
-      imageInputRef.current?.click();
-    } else if (item.id === "tool-ocr") {
-      pdfInputRef.current?.click();
-    } else if (item.id === "tool-voice") {
-      setIsRecording(true);
-    }
-  }, []);
-
-  const handleSearchSubmit = useCallback((query: string) => {
-    console.log("Search query submitted:", query);
-  }, []);
 
   const handleCopy = useCallback((text: string) => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -733,13 +704,6 @@ export default function MainPage() {
           <span className="mp-logo-badge">Studio</span>
         </Link>
 
-        {/* ── Search Bar ── */}
-        <SearchBar
-          placeholder="Search templates, models, selectors..."
-          onSelectResult={handleSearchResultSelect}
-          onSearchSubmit={handleSearchSubmit}
-          className="mp-header-search"
-        />
 
         <div className="mp-header-actions">
           <Link href="/landingpage">
