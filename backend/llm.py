@@ -10,8 +10,6 @@ Uses the resident Qwen3-4B model for two pipeline stages:
 import json
 import requests
 
-from load_models import get_qwen_model, get_qwen_tokenizer
-
 
 # ---------------------------------------------------------------------------
 # Hardcoded system prompts
@@ -281,8 +279,7 @@ def format_outputs(gemini_output: str, desired_outputs: list = None) -> str:
     Returns:
         Formatted text containing distinct sections for each output type.
     """
-    chunks = _chunk_text(gemini_output, max_tokens=2048)
-
+    
     formatting_instructions = "Rewrite the following content into a professional, well-structured response."
     if desired_outputs and len(desired_outputs) > 0:
         formats = ", ".join(desired_outputs)

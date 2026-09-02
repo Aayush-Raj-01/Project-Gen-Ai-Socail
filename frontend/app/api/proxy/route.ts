@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     const endpoint = `http://127.0.0.1:8000/${action}`;
     const contentType = req.headers.get('content-type') || '';
     
-    let fetchOptions: RequestInit = {
+    const fetchOptions: RequestInit = {
       method: 'POST',
     };
 
@@ -30,7 +30,8 @@ export async function POST(req: NextRequest) {
     }
     
     return NextResponse.json(data);
-  } catch (err: any) {
-    return NextResponse.json({ detail: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+    return NextResponse.json({ detail: errorMsg }, { status: 500 });
   }
 }

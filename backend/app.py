@@ -16,6 +16,7 @@ import uuid
 
 from typing import Optional, List
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -84,39 +85,40 @@ async def health_check():
 
 @app.post("/analyze-image")
 async def analyze_uploaded_image(
-    file: UploadFile = File(...),
+    files: List[UploadFile] = File(...),
     prompt: Optional[str] = Form(None),
     desired_outputs: Optional[str] = Form(None),
 ):
     """
-    Upload an image and run the full transformation pipeline.
-
-    Pipeline:
-        Image → Florence+OCR → Qwen Compression → Gemini → Qwen Beautification
+    Upload one or more images and run the full transformation pipeline ONCE.
     """
     try:
-        ext = os.path.splitext(file.filename)[1] if file.filename else ".png"
-        unique_name = f"{uuid.uuid4().hex}{ext}"
-        file_path = os.path.join(UPLOAD_DIR, unique_name)
+        file_paths = []
+        for file in files:
+            ext = os.path.splitext(file.filename)[1] if file.filename else ".png"
+            unique_name = f"{uuid.uuid4().hex}{ext}"
+            file_path = os.path.join(UPLOAD_DIR, unique_name)
 
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        print(f"[app] Image saved: {file_path}")
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            
+            file_paths.append(file_path)
+            print(f"[app] Image saved: {file_path}")
 
         import json
         outputs_list = json.loads(desired_outputs) if desired_outputs else None
         
-        # We need to update process_image in workflow.py to accept desired_outputs
-        result = process_image(file_path, desired_outputs=outputs_list)
-        return result
+        def event_generator():
+            try:
+                for event in process_image(file_paths, prompt=prompt, desired_outputs=outputs_list):
+                    yield event
+            except ContentViolationError as e:
+                yield f'data: {{"error": {{"type": "content_violation", "reason": "{e.reason}"}}}}\n\n'
+            except Exception as e:
+                yield f'data: {{"error": {{"type": "server_error", "reason": "{str(e)}"}}}}\n\n'
+                
+        return StreamingResponse(event_generator(), media_type="text/event-stream")
 
-    except ContentViolationError as e:
-        print(f"[app] MODERATION BLOCKED: {e.reason}")
-        raise HTTPException(
-            status_code=403,
-            detail={"type": "content_violation", "reason": e.reason},
-        )
     except Exception as e:
         print(f"[app] ERROR: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -156,35 +158,40 @@ async def handle_prompt(body: PromptRequest):
 
 @app.post("/analyze-video")
 async def analyze_uploaded_video(
-    file: UploadFile = File(...),
+    files: List[UploadFile] = File(...),
     prompt: Optional[str] = Form(None),
     desired_outputs: Optional[str] = Form(None),
 ):
     """
-    Upload a video and run the full transformation pipeline.
+    Upload one or more videos and run the full transformation pipeline.
     """
     try:
-        ext = os.path.splitext(file.filename)[1] if file.filename else ".mp4"
-        unique_name = f"{uuid.uuid4().hex}{ext}"
-        file_path = os.path.join(UPLOAD_DIR, unique_name)
+        file_paths = []
+        for file in files:
+            ext = os.path.splitext(file.filename)[1] if file.filename else ".mp4"
+            unique_name = f"{uuid.uuid4().hex}{ext}"
+            file_path = os.path.join(UPLOAD_DIR, unique_name)
 
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        print(f"[app] Video saved: {file_path}")
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            
+            file_paths.append(file_path)
+            print(f"[app] Video saved: {file_path}")
 
         import json
         outputs_list = json.loads(desired_outputs) if desired_outputs else None
         
-        result = process_video(file_path, desired_outputs=outputs_list)
-        return result
+        def event_generator():
+            try:
+                for event in process_video(file_paths, prompt=prompt, desired_outputs=outputs_list):
+                    yield event
+            except ContentViolationError as e:
+                yield f'data: {{"error": {{"type": "content_violation", "reason": "{e.reason}"}}}}\n\n'
+            except Exception as e:
+                yield f'data: {{"error": {{"type": "server_error", "reason": "{str(e)}"}}}}\n\n'
+                
+        return StreamingResponse(event_generator(), media_type="text/event-stream")
 
-    except ContentViolationError as e:
-        print(f"[app] MODERATION BLOCKED: {e.reason}")
-        raise HTTPException(
-            status_code=403,
-            detail={"type": "content_violation", "reason": e.reason},
-        )
     except Exception as e:
         print(f"[app] ERROR: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -192,35 +199,40 @@ async def analyze_uploaded_video(
 
 @app.post("/analyze-audio")
 async def analyze_uploaded_audio(
-    file: UploadFile = File(...),
+    files: List[UploadFile] = File(...),
     prompt: Optional[str] = Form(None),
     desired_outputs: Optional[str] = Form(None),
 ):
     """
-    Upload an audio file and run the full transformation pipeline.
+    Upload one or more audio files and run the full transformation pipeline.
     """
     try:
-        ext = os.path.splitext(file.filename)[1] if file.filename else ".mp3"
-        unique_name = f"{uuid.uuid4().hex}{ext}"
-        file_path = os.path.join(UPLOAD_DIR, unique_name)
+        file_paths = []
+        for file in files:
+            ext = os.path.splitext(file.filename)[1] if file.filename else ".mp3"
+            unique_name = f"{uuid.uuid4().hex}{ext}"
+            file_path = os.path.join(UPLOAD_DIR, unique_name)
 
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        print(f"[app] Audio saved: {file_path}")
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            
+            file_paths.append(file_path)
+            print(f"[app] Audio saved: {file_path}")
 
         import json
         outputs_list = json.loads(desired_outputs) if desired_outputs else None
         
-        result = process_audio(file_path, desired_outputs=outputs_list)
-        return result
+        def event_generator():
+            try:
+                for event in process_audio(file_paths, prompt=prompt, desired_outputs=outputs_list):
+                    yield event
+            except ContentViolationError as e:
+                yield f'data: {{"error": {{"type": "content_violation", "reason": "{e.reason}"}}}}\n\n'
+            except Exception as e:
+                yield f'data: {{"error": {{"type": "server_error", "reason": "{str(e)}"}}}}\n\n'
+                
+        return StreamingResponse(event_generator(), media_type="text/event-stream")
 
-    except ContentViolationError as e:
-        print(f"[app] MODERATION BLOCKED: {e.reason}")
-        raise HTTPException(
-            status_code=403,
-            detail={"type": "content_violation", "reason": e.reason},
-        )
     except Exception as e:
         print(f"[app] ERROR: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -228,35 +240,40 @@ async def analyze_uploaded_audio(
 
 @app.post("/analyze-pdf")
 async def analyze_uploaded_pdf(
-    file: UploadFile = File(...),
+    files: List[UploadFile] = File(...),
     prompt: Optional[str] = Form(None),
     desired_outputs: Optional[str] = Form(None),
 ):
     """
-    Upload a PDF and run the full transformation pipeline.
+    Upload one or more PDFs and run the full transformation pipeline.
     """
     try:
-        ext = os.path.splitext(file.filename)[1] if file.filename else ".pdf"
-        unique_name = f"{uuid.uuid4().hex}{ext}"
-        file_path = os.path.join(UPLOAD_DIR, unique_name)
+        file_paths = []
+        for file in files:
+            ext = os.path.splitext(file.filename)[1] if file.filename else ".pdf"
+            unique_name = f"{uuid.uuid4().hex}{ext}"
+            file_path = os.path.join(UPLOAD_DIR, unique_name)
 
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        print(f"[app] PDF saved: {file_path}")
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            
+            file_paths.append(file_path)
+            print(f"[app] PDF saved: {file_path}")
 
         import json
         outputs_list = json.loads(desired_outputs) if desired_outputs else None
         
-        result = process_pdf(file_path, desired_outputs=outputs_list)
-        return result
+        def event_generator():
+            try:
+                for event in process_pdf(file_paths, prompt=prompt, desired_outputs=outputs_list):
+                    yield event
+            except ContentViolationError as e:
+                yield f'data: {{"error": {{"type": "content_violation", "reason": "{e.reason}"}}}}\n\n'
+            except Exception as e:
+                yield f'data: {{"error": {{"type": "server_error", "reason": "{str(e)}"}}}}\n\n'
+                
+        return StreamingResponse(event_generator(), media_type="text/event-stream")
 
-    except ContentViolationError as e:
-        print(f"[app] MODERATION BLOCKED: {e.reason}")
-        raise HTTPException(
-            status_code=403,
-            detail={"type": "content_violation", "reason": e.reason},
-        )
     except Exception as e:
         print(f"[app] ERROR: {e}")
         raise HTTPException(status_code=500, detail=str(e))

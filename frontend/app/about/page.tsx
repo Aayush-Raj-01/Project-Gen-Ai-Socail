@@ -12,7 +12,6 @@ import {
   ArrowRight,
   Layers,
   Server,
-  Code,
 } from "lucide-react";
 
 export default function AboutPage() {

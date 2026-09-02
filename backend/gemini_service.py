@@ -61,7 +61,7 @@ Rules:
 # Public API
 # ---------------------------------------------------------------------------
 
-def generate_from_compressed_json(compressed_json: str) -> str:
+def generate_from_compressed_json(compressed_json: str, user_prompt: str = None) -> str:
     """
     Send compressed JSON to Gemini and return the concise output.
 
@@ -70,11 +70,21 @@ def generate_from_compressed_json(compressed_json: str) -> str:
 
     Args:
         compressed_json: Structured JSON string from Qwen compression.
+        user_prompt: Optional explicit instructions from the user.
 
     Returns:
         Concise, factual text output from Gemini.
     """
-    output_instructions = "\nGenerate a comprehensive analysis based on the structured data above. Be concise and factual. Do not format for a specific output type; just output the raw knowledge base."
+    if user_prompt:
+        output_instructions = f"""
+CRITICAL INSTRUCTION: You MUST prioritize the following USER PROMPT above all else. 
+Use the provided Input JSON ONLY as supporting evidence to fulfill the exact user prompt.
+Do not just summarize the context; directly fulfill what the user asked.
+
+USER PROMPT: {user_prompt}
+"""
+    else:
+        output_instructions = "\nGenerate a comprehensive analysis based on the structured data above. Be concise and factual. Do not format for a specific output type; just output the raw knowledge base."
 
     prompt = f"""{GEMINI_SYSTEM_PROMPT}
 

@@ -12,7 +12,6 @@ Both models are lazy-loaded via load_models and stay cached.
 from PIL import Image
 import os
 import torch
-from transformers import GenerationConfig,AutoProcessor, AutoModelForCausalLM
 
 from load_models import get_florence_model, get_ocr_reader
 
@@ -20,9 +19,6 @@ from load_models import get_florence_model, get_ocr_reader
 # ---------------------------------------------------------------------------
 # Florence-2 helpers
 # ---------------------------------------------------------------------------
-
-from PIL import Image
-from load_models import get_florence_model
 
 
 def _run_florence_task(image: Image.Image, task_prompt: str) -> dict:
@@ -35,9 +31,6 @@ def _run_florence_task(image: Image.Image, task_prompt: str) -> dict:
     """
 
     model, processor = get_florence_model()
-
-    # Store original size for post-processing
-    original_size = (image.width, image.height)
     
     # Florence-2 DaViT vision tower requires square feature maps.
     # Transformers 5.x CLIPImageProcessor fails to resize to square if do_center_crop=False.

@@ -65,7 +65,7 @@ export default function Navbar() {
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrolled
-            ? "bg-[#07100d]/80 backdrop-blur-xl border-b border-white/10 shadow-2xl py-3"
+            ? "bg-[#000000]/80 backdrop-blur-xl border-b border-white/10 shadow-2xl py-3"
             : "bg-gradient-to-b from-black/80 via-black/40 to-transparent backdrop-blur-sm py-4 md:py-5"
         } px-4 sm:px-6 md:px-12`}
       >
@@ -75,7 +75,7 @@ export default function Navbar() {
             href="/"
             className="group flex items-center gap-2.5 text-white font-semibold tracking-wider text-sm sm:text-base uppercase transition-transform hover:scale-[1.02]"
           >
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-emerald-500 via-teal-400 to-cyan-300 flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:shadow-emerald-400/40 transition-shadow">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-neutral-200 via-neutral-400 to-neutral-600 flex items-center justify-center shadow-lg shadow-neutral-200/20 group-hover:shadow-white/40 transition-shadow">
               <Zap className="w-4 h-4 text-black font-black" />
             </div>
             <span className="font-bold tracking-[0.18em] bg-gradient-to-r from-white via-neutral-200 to-neutral-400 bg-clip-text text-transparent">
@@ -95,7 +95,7 @@ export default function Navbar() {
                     link.isActive
                       ? "bg-white text-black shadow-md shadow-white/10 font-semibold"
                       : link.isHighlight
-                      ? "text-emerald-300 hover:text-white hover:bg-white/[0.08]"
+                      ? "text-white hover:text-white hover:bg-white/[0.08]"
                       : "text-neutral-300 hover:text-white hover:bg-white/[0.08]"
                   }`}
                 >
@@ -110,9 +110,9 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-3">
             <button
               onClick={() => setLoginModalOpen(true)}
-              className="group relative inline-flex items-center gap-2 px-5 py-2 text-xs uppercase tracking-widest font-semibold text-white rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/15 hover:border-emerald-400/50 shadow-sm transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
+              className="group relative inline-flex items-center gap-2 px-5 py-2 text-xs uppercase tracking-widest font-semibold text-white rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/15 hover:border-white/50 shadow-sm transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
             >
-              <LogIn className="w-3.5 h-3.5 text-emerald-400 group-hover:translate-x-0.5 transition-transform" />
+              <LogIn className="w-3.5 h-3.5 text-white group-hover:translate-x-0.5 transition-transform" />
               <span>Login</span>
             </button>
           </div>
@@ -129,7 +129,7 @@ export default function Navbar() {
 
         {/* Mobile Dropdown Drawer */}
         {mobileMenuOpen && (
-          <div className="md:hidden mt-3 pt-4 pb-6 px-4 bg-[#0c1513]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl flex flex-col gap-3 animate-in fade-in slide-in-from-top-4 duration-200">
+          <div className="md:hidden mt-3 pt-4 pb-6 px-4 bg-[#09090b]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl flex flex-col gap-3 animate-in fade-in slide-in-from-top-4 duration-200">
             {navLinks.map((link) => {
               const Icon = link.icon;
               return (
@@ -155,7 +155,7 @@ export default function Navbar() {
                   setMobileMenuOpen(false);
                   setLoginModalOpen(true);
                 }}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-semibold text-sm uppercase tracking-wider shadow-lg shadow-emerald-500/20"
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-neutral-200 to-neutral-400 text-black font-semibold text-sm uppercase tracking-wider shadow-lg shadow-neutral-200/20"
               >
                 <LogIn className="w-4 h-4" />
                 <span>Login</span>
@@ -168,7 +168,7 @@ export default function Navbar() {
       {/* ── Glassmorphic Login Modal ── */}
       {loginModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md bg-[#0c1513]/90 border border-white/15 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-2xl text-white">
+          <div className="relative w-full max-w-md bg-[#09090b]/90 border border-white/15 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-2xl text-white">
             {/* Close Button */}
             <button
               onClick={() => setLoginModalOpen(false)}
@@ -179,7 +179,7 @@ export default function Navbar() {
 
             {/* Modal Header */}
             <div className="text-center mb-6">
-              <div className="inline-flex p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 mb-3">
+              <div className="inline-flex p-3 rounded-2xl bg-neutral-200/10 border border-neutral-200/30 text-white mb-3">
                 <Lock className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold tracking-wide">Welcome Back</h3>
@@ -229,7 +229,7 @@ export default function Navbar() {
             {/* Divider */}
             <div className="relative flex items-center justify-center mb-6">
               <div className="border-t border-white/10 w-full"></div>
-              <span className="bg-[#0c1513] px-3 text-[10px] uppercase tracking-widest text-neutral-400 absolute">
+              <span className="bg-[#09090b] px-3 text-[10px] uppercase tracking-widest text-neutral-400 absolute">
                 Or with email
               </span>
             </div>
@@ -255,7 +255,7 @@ export default function Navbar() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@example.com"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.05] border border-white/10 focus:border-emerald-400 focus:outline-none text-sm text-white placeholder-neutral-500 transition-colors"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.05] border border-white/10 focus:border-white focus:outline-none text-sm text-white placeholder-neutral-500 transition-colors"
                   />
                 </div>
               </div>
@@ -272,14 +272,14 @@ export default function Navbar() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.05] border border-white/10 focus:border-emerald-400 focus:outline-none text-sm text-white placeholder-neutral-500 transition-colors"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.05] border border-white/10 focus:border-white focus:outline-none text-sm text-white placeholder-neutral-500 transition-colors"
                   />
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-bold text-sm tracking-wider uppercase shadow-lg shadow-emerald-400/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white hover:bg-white text-black font-bold text-sm tracking-wider uppercase shadow-lg shadow-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
               >
                 <span>Sign In</span>
                 <ArrowRight className="w-4 h-4" />

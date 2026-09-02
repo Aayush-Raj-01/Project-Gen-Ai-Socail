@@ -10,10 +10,8 @@ Manages lifecycle of all ML models:
 
 import torch
 from transformers import (
-    AutoTokenizer,
     AutoModelForCausalLM,
     AutoProcessor,
-    BitsAndBytesConfig,
 )
 
 # ---------------------------------------------------------------------------
@@ -63,7 +61,7 @@ def _patch_florence_environment():
     Applies global class-level patches to transformers classes before loading Florence-2.
     This resolves backwards compatibility issues when loading Florence-2 in transformers>=5.x.
     """
-    from transformers import PretrainedConfig, PreTrainedModel, PreTrainedTokenizerBase
+    from transformers import PretrainedConfig, PreTrainedTokenizerBase
     import torch.nn as nn
     
     # 1. Bypass forced_bos_token_id dynamic access blocks

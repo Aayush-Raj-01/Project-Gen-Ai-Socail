@@ -4,6 +4,7 @@ import { BACKEND_URL } from "../../config";
 import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import Navbar from "@/app/components/navbar";
 
 import { NavyButton } from "../components/NavyButton";
 import "./mainpage.css";
@@ -274,6 +275,51 @@ export const PlexusHero: React.FC = () => {
   );
 };
 
+const DynamicLoadingText = ({ status }: { status: string }) => {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    // Map status string to rough progress %
+    let newProgress = progress;
+    if (status.includes("Analyzing") || status.includes("Transcribing") || status.includes("Extracting")) {
+      newProgress = 25;
+    } else if (status.includes("Compressing")) {
+      newProgress = 50;
+    } else if (status.includes("Generating")) {
+      newProgress = 75;
+    } else if (status.includes("Formatting")) {
+      newProgress = 95;
+    }
+
+    setProgress(newProgress);
+  }, [status]);
+
+  return (
+    <div style={{ width: "100%", maxWidth: "320px", textAlign: "center" }}>
+      <motion.h2
+        key={status}
+        initial={{ opacity: 0, y: 5 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -5 }}
+        transition={{ duration: 0.3 }}
+      >
+        {status}
+      </motion.h2>
+      
+      <div className="mp-progress-track">
+        <motion.div 
+          className="mp-progress-fill" 
+          animate={{ width: `${progress}%` }} 
+          transition={{ ease: "easeInOut", duration: 3.5 }}
+        />
+      </div>
+      <p style={{ marginTop: "12px", fontSize: "13px", color: "#A1A1AA" }}>
+        Live Progress: {Math.round(progress)}%
+      </p>
+    </div>
+  );
+};
+
 export default function MainPage() {
   // ── State ──
   const [prompt, setPrompt] = useState(() => {
@@ -307,8 +353,10 @@ export default function MainPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loadingStatus, setLoadingStatus] = useState<string>("Initializing...");
   const [moderationWarning, setModerationWarning] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [generateHovered, setGenerateHovered] = useState(false);
 
   // File input refs
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -366,29 +414,36 @@ export default function MainPage() {
   }, []);
 
 
-  const handleCopy = useCallback((text: string) => {
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  }, []);
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
-  const handleSubmit = useCallback(async () => {
-    const imageFile = attachedFiles.find((f) => f.type === "image");
-    const videoFile = attachedFiles.find((f) => f.type === "video");
-    const audioFile = attachedFiles.find((f) => f.type === "audio");
-    const pdfFile = attachedFiles.find((f) => f.type === "pdf");
+  const handleReset = () => {
+    setResponse(null);
+    setPrompt("");
+    setAttachedFiles([]);
+    setLinkValue("");
+    setError(null);
+  };
+
+  const handleSubmit = async () => {
+    if (!selections.outputType || (Array.isArray(selections.outputType) && selections.outputType.length === 0)) {
+      setError("Please select at least one output type.");
+      return;
+    }
+
     const hasPrompt = prompt.trim().length > 0;
 
-    const fileToSend = imageFile || videoFile || audioFile || pdfFile;
-
-    if (!fileToSend && !hasPrompt) {
+    if (attachedFiles.length === 0 && !hasPrompt) {
       setError("Please enter a prompt or attach a file.");
       return;
     }
 
     setIsLoading(true);
+    setLoadingStatus("Connecting to server...");
+
     setError(null);
     setResponse(null);
     setModerationWarning(null);
@@ -413,28 +468,79 @@ export default function MainPage() {
       : (selections.outputType ? [selections.outputType] : []);
 
     try {
-      let res: Response;
-
-      if (fileToSend) {
+      if (attachedFiles.length > 0) {
         const formData = new FormData();
-        formData.append("file", fileToSend.file);
+        const type = attachedFiles[0].type; // assume all files are same type for batching
+        for (const fileToSend of attachedFiles) {
+          formData.append("files", fileToSend.file);
+        }
         if (fullPrompt) formData.append("prompt", fullPrompt);
         if (desiredOutputs.length > 0) formData.append("desired_outputs", JSON.stringify(desiredOutputs));
 
         let endpoint = `${BACKEND_URL}/analyze-image`;
-        if (fileToSend.type === "video") endpoint = `${BACKEND_URL}/analyze-video`;
-        if (fileToSend.type === "audio") endpoint = `${BACKEND_URL}/analyze-audio`;
-        if (fileToSend.type === "pdf") endpoint = `${BACKEND_URL}/analyze-pdf`;
+        if (type === "video") endpoint = `${BACKEND_URL}/analyze-video`;
+        if (type === "audio") endpoint = `${BACKEND_URL}/analyze-audio`;
+        if (type === "pdf") endpoint = `${BACKEND_URL}/analyze-pdf`;
 
-        res = await fetch(endpoint, {
+        const res = await fetch(endpoint, {
           method: "POST",
           headers: {
             "Bypass-Tunnel-Reminder": "true" 
           },
           body: formData,
         });
+
+        if (!res.ok) {
+          throw new Error(`Server error: ${res.status}`);
+        }
+
+        const reader = res.body?.getReader();
+        if (!reader) throw new Error("Stream not readable");
+
+        const decoder = new TextDecoder("utf-8");
+        let done = false;
+        let buffer = "";
+
+        while (!done) {
+          const { value, done: readerDone } = await reader.read();
+          done = readerDone;
+          if (value) {
+            buffer += decoder.decode(value, { stream: true });
+            let newlineIdx = buffer.indexOf('\n');
+            
+            while (newlineIdx !== -1) {
+              const line = buffer.slice(0, newlineIdx).trim();
+              buffer = buffer.slice(newlineIdx + 1);
+              
+              if (line.startsWith('data: ')) {
+                const jsonStr = line.slice(6);
+                if (jsonStr) {
+                  try {
+                    const payload = JSON.parse(jsonStr);
+                    if (payload.status) {
+                      setLoadingStatus(payload.status);
+                    } else if (payload.result) {
+                      setResponse(payload.result);
+                    } else if (payload.error) {
+                      if (payload.error.type === "content_violation") {
+                        setModerationWarning(payload.error.reason);
+                      } else {
+                        setError(payload.error.reason);
+                      }
+                    }
+                  } catch (e) {
+                    // Ignore parse errors for incomplete chunks
+                  }
+                }
+              }
+              newlineIdx = buffer.indexOf('\n');
+            }
+          }
+        }
       } else {
-        res = await fetch(`${BACKEND_URL}/process-prompt`, {
+        // Text-only prompt
+        setLoadingStatus("Generating response...");
+        const res = await fetch(`${BACKEND_URL}/process-prompt`, {
           method: "POST",
           headers: { 
             "Content-Type": "application/json",
@@ -442,25 +548,25 @@ export default function MainPage() {
           },
           body: JSON.stringify({ prompt: fullPrompt, desired_outputs: desiredOutputs.length > 0 ? desiredOutputs : undefined }),
         });
-      }
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => null);
-        if (res.status === 403 && errData?.detail?.type === "content_violation") {
-          setModerationWarning(errData.detail.reason);
-          return;
+        if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          if (res.status === 403 && errData?.detail?.type === "content_violation") {
+            setModerationWarning(errData.detail.reason);
+            return;
+          }
+          throw new Error(errData?.detail || `Server error: ${res.status}`);
         }
-        throw new Error(errData?.detail || `Server error: ${res.status}`);
-      }
 
-      const data = await res.json();
-      setResponse(data);
+        const data = await res.json();
+        setResponse(data);
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setIsLoading(false);
     }
-  }, [attachedFiles, prompt, selections, linkValue]);
+  };
 
   const renderFormattedOutputs = (rawText: string) => {
     const sections = rawText.split(/(?=### )/).filter((s) => s.trim().length > 0);
@@ -657,7 +763,7 @@ export default function MainPage() {
         </>
       )}
 
-      {/* ── Loading Overlay ── */}
+      {/* ── Dynamic Loading Overlay ── */}
       <AnimatePresence>
         {isLoading && (
           <motion.div
@@ -672,15 +778,21 @@ export default function MainPage() {
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.8, y: 20, opacity: 0 }}
             >
-              <div className="mp-spinner-ring"></div>
-              <h2>Generating Content</h2>
-              <p>The AI is analyzing and formatting your request...</p>
+              <div className="mp-geometric-loader">
+                <div className="mp-geo-cube"></div>
+                <div className="mp-geo-cube"></div>
+                <div className="mp-geo-cube"></div>
+                <div className="mp-geo-cube"></div>
+              </div>
+              
+              <DynamicLoadingText status={loadingStatus} />
+              
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── Animated Mesh / Aurora Gradient Background ── */}
+      {/* ── Aurora Gradient Shader Background ── */}
       <div className="mp-aurora-container" aria-hidden="true">
         <div className="mp-aurora-blob blob-1" />
         <div className="mp-aurora-blob blob-2" />
@@ -689,39 +801,11 @@ export default function MainPage() {
         <div className="mp-aurora-overlay" />
       </div>
 
-      {/* ── Fixed 3D Plexus Background Canvas ── */}
-      <PlexusHero />
+      {/* ── Sleek Minimal Grid Background ── */}
+      <div className="mp-grid-background" aria-hidden="true" />
 
-      {/* ── Header ── */}
-      <header className="mp-header">
-        <Link href="/" className="mp-logo-wrap">
-          <motion.div
-            className="mp-logo-icon"
-            whileHover={{
-              scale: 1.35,
-              rotate: [0, -20, 20, -10, 10, 0],
-              y: -2,
-              transition: { duration: 0.5, ease: "easeOut" },
-            }}
-            whileTap={{ scale: 0.85, rotate: 0 }}
-          >
-            ⚡
-          </motion.div>
-          <span className="mp-logo">GenAI Social</span>
-          <span className="mp-logo-badge">Studio</span>
-        </Link>
-
-
-        <div className="mp-header-actions">
-          <Link href="/landingpage">
-            <NavyButton variant="gradient" size="sm">
-              ← Landing
-            </NavyButton>
-          </Link>
-          <button className="mp-header-btn">Templates</button>
-          <button className="mp-header-btn">Settings</button>
-        </div>
-      </header>
+      {/* ── Navbar ── */}
+      <Navbar />
 
       {/* ── Main Content ── */}
       <main className="mp-content">
@@ -850,6 +934,7 @@ export default function MainPage() {
             className="mp-hidden-input"
             type="file"
             accept="image/*"
+            multiple
             onChange={(e) => handleFileAttach(e, "image")}
           />
           <input
@@ -857,6 +942,7 @@ export default function MainPage() {
             className="mp-hidden-input"
             type="file"
             accept=".pdf"
+            multiple
             onChange={(e) => handleFileAttach(e, "pdf")}
           />
           <input
@@ -864,6 +950,7 @@ export default function MainPage() {
             className="mp-hidden-input"
             type="file"
             accept="video/*"
+            multiple
             onChange={(e) => handleFileAttach(e, "video")}
           />
 
@@ -1003,11 +1090,102 @@ export default function MainPage() {
               </motion.button>
             </div>
 
+              {(() => {
+                const key = "outputType" as SelectorKey;
+                const data = SELECTOR_DATA[key];
+                const isOpen = openSelector === key;
+                const selectedValue = selections[key];
+                const isMissingOutput = !selectedValue || (Array.isArray(selectedValue) && selectedValue.length === 0);
+                const shouldShake = isMissingOutput && generateHovered;
+
+                return (
+                  <div style={{ position: "relative", zIndex: 50 }}>
+                    <motion.button
+                      className={`mp-selector-trigger ${isOpen ? "active" : ""} ${selectedValue ? "has-value" : ""} ${isMissingOutput ? "highlight-required" : ""}`}
+                      onClick={() => toggleSelector(key)}
+                      animate={shouldShake ? {
+                        x: [-4, 4, -4, 4, 0],
+                        backgroundColor: ["#fee2e2", "#fecaca", "#fee2e2"],
+                        borderColor: ["#ef4444", "#ef4444", "#ef4444"],
+                      } : {}}
+                      transition={shouldShake ? { duration: 0.4 } : {}}
+                      whileHover={{ y: -3, scale: 1.04 }}
+                      whileTap={{ scale: 0.94 }}
+                    >
+                      <motion.span
+                        className={`mp-icon-badge mp-selector-icon-badge badge-${data.theme}`}
+                        animate={shouldShake ? { backgroundColor: "#ef4444", color: "#ffffff", borderColor: "#dc2626" } : {}}
+                        whileHover={{
+                          scale: 1.45,
+                          rotate: [0, -18, 18, -10, 6, 0],
+                          y: -2,
+                          transition: { duration: 0.45, ease: "easeOut" },
+                        }}
+                        whileTap={{ scale: 0.85 }}
+                      >
+                        {data.icon}
+                      </motion.span>
+                      <span style={shouldShake ? { color: "#b91c1c", fontWeight: 700 } : {}}>{data.label}</span>
+                      {selectedValue && (
+                        <span className="mp-selector-value">
+                          {Array.isArray(selectedValue) ? `${selectedValue.length} selected` : selectedValue}
+                        </span>
+                      )}
+                      <motion.span
+                        className="mp-selector-chevron"
+                        animate={{ rotate: isOpen ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        ▼
+                      </motion.span>
+                    </motion.button>
+                    <AnimatePresence>
+                      {isOpen && (
+                        <>
+                          <div
+                            className="mp-popup-overlay"
+                            onClick={() => setOpenSelector(null)}
+                          />
+                          <motion.div
+                            className="mp-popup"
+                            initial={{ opacity: 0, scale: 0.92, y: 10, x: "-50%" }}
+                            animate={{ opacity: 1, scale: 1, y: 0, x: "-50%" }}
+                            exit={{ opacity: 0, scale: 0.92, y: 8, x: "-50%" }}
+                            transition={{ type: "spring", stiffness: 450, damping: 25 }}
+                          >
+                            <div className="mp-popup-title">{data.label}</div>
+                            {data.options.map((option) => {
+                              const isSelected = Array.isArray(selectedValue) ? selectedValue.includes(option) : selectedValue === option;
+                              return (
+                                <motion.button
+                                  key={option}
+                                  className={`mp-popup-option ${isSelected ? "selected" : ""}`}
+                                  onClick={() => {
+                                    selectOption(key, option);
+                                  }}
+                                  whileHover={{ x: 4 }}
+                                  whileTap={{ scale: 0.97 }}
+                                >
+                                  <span className="mp-popup-option-dot" />
+                                  {option}
+                                </motion.button>
+                              );
+                            })}
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })()}
+
             <motion.button
               className="mp-submit-btn"
               disabled={isLoading || (attachedFiles.length === 0 && prompt.trim().length === 0) || !selections.outputType || (Array.isArray(selections.outputType) ? selections.outputType.length === 0 : false)}
               title={(!selections.outputType || (Array.isArray(selections.outputType) ? selections.outputType.length === 0 : false)) ? "Please select an Output Type" : "Generate with GenAI"}
               onClick={handleSubmit}
+              onMouseEnter={() => setGenerateHovered(true)}
+              onMouseLeave={() => setGenerateHovered(false)}
               whileHover={{
                 scale: 1.18,
                 y: -3,
@@ -1081,7 +1259,7 @@ export default function MainPage() {
 
         {/* ── Bubble-Type Selector Bar with Dedicated Dark Badges & Motion ── */}
         <div className="mp-selectors-bar">
-          {(Object.keys(SELECTOR_DATA) as SelectorKey[]).map((key) => {
+          {(Object.keys(SELECTOR_DATA) as SelectorKey[]).filter(k => k !== "outputType").map((key) => {
             const data = SELECTOR_DATA[key];
             const isOpen = openSelector === key;
             const selectedValue = selections[key];
@@ -1089,7 +1267,7 @@ export default function MainPage() {
             return (
               <div key={key} style={{ position: "relative" }}>
                 <motion.button
-                  className={`mp-selector-trigger ${isOpen ? "active" : ""} ${selectedValue ? "has-value" : ""} ${key === "outputType" && (!selectedValue || (Array.isArray(selectedValue) && selectedValue.length === 0)) ? "highlight-required" : ""}`}
+                  className={`mp-selector-trigger ${isOpen ? "active" : ""} ${selectedValue ? "has-value" : ""}`}
                   onClick={() => toggleSelector(key)}
                   whileHover={{ y: -3, scale: 1.04 }}
                   whileTap={{ scale: 0.94 }}
@@ -1145,9 +1323,7 @@ export default function MainPage() {
                               className={`mp-popup-option ${isSelected ? "selected" : ""}`}
                               onClick={() => {
                                 selectOption(key, option);
-                                if (key !== "outputType") {
                                   setOpenSelector(null);
-                                }
                               }}
                             whileHover={{ x: 4 }}
                             whileTap={{ scale: 0.97 }}
@@ -1245,16 +1421,27 @@ export default function MainPage() {
                   <span className="mp-result-title">Formatted Content Outputs</span>
                   <span className="mp-result-badge">AI Generated</span>
                 </div>
-                {Boolean(response.final_output) && (
+                <div style={{ display: "flex", gap: "10px" }}>
                   <motion.button
                     className="mp-copy-btn"
-                    onClick={() => handleCopy(String(response.final_output))}
-                    whileHover={{ scale: 1.08, y: -2 }}
+                    style={{ background: "#FAFAFA", color: "#000000", border: "1px solid rgba(0,0,0,0.1)" }}
+                    onClick={handleReset}
+                    whileHover={{ scale: 1.05, y: -2 }}
                     whileTap={{ scale: 0.94 }}
                   >
-                    {copied ? "✓ Copied!" : "📋 Copy Output"}
+                    Start Over
                   </motion.button>
-                )}
+                  {Boolean(response.final_output) && (
+                    <motion.button
+                      className="mp-copy-btn"
+                      onClick={() => handleCopy(String(response.final_output))}
+                      whileHover={{ scale: 1.08, y: -2 }}
+                      whileTap={{ scale: 0.94 }}
+                    >
+                      {copied ? "✓ Copied!" : "📋 Copy Output"}
+                    </motion.button>
+                  )}
+                </div>
               </div>
 
               {/* Final Output */}

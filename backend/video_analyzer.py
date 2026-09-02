@@ -12,7 +12,6 @@ Uses:
 
 import os
 import cv2
-import json
 import torch
 import gc
 from PIL import Image
