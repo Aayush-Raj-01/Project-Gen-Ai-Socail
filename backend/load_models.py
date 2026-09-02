@@ -32,34 +32,9 @@ _ocr_reader = None
 # Qwen3-4B  —  Eager load at import time
 # ---------------------------------------------------------------------------
 
-QWEN_MODEL_NAME = "Qwen/Qwen3-4B-Instruct-2507"
-
-_bnb_config = BitsAndBytesConfig(
-    load_in_4bit=True,
-    bnb_4bit_compute_dtype=torch.float16,
-    bnb_4bit_quant_type="nf4",
-    bnb_4bit_use_double_quant=True,
-)
-
-
 def _load_qwen():
-    """Load Qwen model and tokenizer. Called once at module import."""
-    global _qwen_model, _qwen_tokenizer
-
-    print("[load_models] Loading Qwen3-4B-Instruct-2507 (4-bit) ...")
-
-    _qwen_tokenizer = AutoTokenizer.from_pretrained(QWEN_MODEL_NAME, trust_remote_code=True)
-    _qwen_model = AutoModelForCausalLM.from_pretrained(
-        QWEN_MODEL_NAME,
-        device_map="auto",
-        trust_remote_code=True,
-        quantization_config=BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_compute_dtype=torch.float16,
-            bnb_4bit_use_double_quant=True,
-        ),
-    )
-    print("[load_models] Qwen loaded successfully.")
+    """Ollama handles model loading automatically in the background."""
+    print("[load_models] Using Ollama backend. No local transformers model loaded.")
 
 
 # Run immediately on first import so Qwen is resident for the server lifetime.

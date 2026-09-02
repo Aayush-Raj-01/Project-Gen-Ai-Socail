@@ -52,7 +52,11 @@ app = FastAPI(
 # CORS — allow all origins for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "https://0239-122-185-51-250.ngrok-free.app",
+        "https://wksri-122-185-51-250.run.pinggy-free.link"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

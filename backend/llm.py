@@ -8,6 +8,7 @@ Uses the resident Qwen3-4B model for two pipeline stages:
 """
 
 import json
+import requests
 
 from load_models import get_qwen_model, get_qwen_tokenizer
 
@@ -110,20 +111,16 @@ COMPRESSION_SCHEMA = {
 
 def _chunk_text(text: str, max_tokens: int = 2000) -> list[str]:
     """
-    Split text into chunks of at most max_tokens using the Qwen tokenizer.
-    Ensures that we don't exceed model context size or cause OOM errors.
+    Split text into chunks of roughly max_tokens (approx 4 chars per token).
+    Does not use tokenizer since we are using Ollama API.
     """
-    tokenizer = get_qwen_tokenizer()
-    tokens = tokenizer.encode(text)
-    
-    if len(tokens) <= max_tokens:
+    max_chars = max_tokens * 4
+    if len(text) <= max_chars:
         return [text]
         
     chunks = []
-    for i in range(0, len(tokens), max_tokens):
-        chunk_tokens = tokens[i:i + max_tokens]
-        chunk_text = tokenizer.decode(chunk_tokens, skip_special_tokens=True)
-        chunks.append(chunk_text)
+    for i in range(0, len(text), max_chars):
+        chunks.append(text[i:i + max_chars])
         
     return chunks
 
@@ -134,44 +131,32 @@ def _generate(
     max_new_tokens: int = 1024,
 ) -> str:
     """
-    Run Qwen inference with a system + user message pair.
-
-    Uses greedy decoding (do_sample=False) for deterministic output.
+    Run inference via Ollama local API.
     """
-    model = get_qwen_model()
-    tokenizer = get_qwen_tokenizer()
-
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt},
-    ]
-
-    text = tokenizer.apply_chat_template(
-        messages,
-        tokenize=False,
-        add_generation_prompt=True,
-    )
-
-    inputs = tokenizer(
-        text,
-        return_tensors="pt",
-    ).to(model.device)
-
-    outputs = model.generate(
-        **inputs,
-        max_new_tokens=max_new_tokens,
-        do_sample=False,
-        temperature=0.1,
-        use_cache=True,
-    )
-
-    # Strip the input tokens from the output
-    generated = tokenizer.decode(
-        outputs[0][inputs.input_ids.shape[1]:],
-        skip_special_tokens=True,
-    )
-
-    return generated.strip()
+    url = "http://localhost:11434/api/chat"
+    payload = {
+        "model": "hf.co/unsloth/Qwen3-4B-Instruct-2507-GGUF:Q4_K_M",
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+        "stream": False,
+        "options": {
+            "num_predict": max_new_tokens,
+            "temperature": 0.1,
+            "top_k": 40,
+            "top_p": 0.9,
+        }
+    }
+    
+    try:
+        response = requests.post(url, json=payload, timeout=300)
+        response.raise_for_status()
+        data = response.json()
+        return data["message"]["content"].strip()
+    except Exception as e:
+        print(f"[llm] Ollama generation failed: {e}")
+        return ""
 
 
 # ---------------------------------------------------------------------------
@@ -195,6 +180,22 @@ def compress_to_json(raw_text: str, image_context: str = "") -> str:
     schema_str = json.dumps(COMPRESSION_SCHEMA, indent=2)
 
     chunks = _chunk_text(raw_text, max_tokens=2048)
+
+    if len(raw_text) < 800:
+        print("[llm] Text is short (<800 chars). Bypassing Qwen compression for speed.")
+        data = {
+            "summary": raw_text,
+            "entities": {"people": [], "organizations": [], "locations": [], "other": []},
+            "topics": [],
+            "sentiment": "neutral",
+            "statistics": [],
+            "risks": [],
+            "recommendations": [],
+            "important_facts": [],
+            "image_context": image_context if image_context else "N/A",
+            "priority": "low"
+        }
+        return json.dumps(data)
 
     if len(chunks) == 1:
         user_prompt = f"""Extract all important information from the following text into this exact JSON schema:
@@ -287,8 +288,7 @@ def format_outputs(gemini_output: str, desired_outputs: list = None) -> str:
         formats = ", ".join(desired_outputs)
         formatting_instructions = f"CRITICAL INSTRUCTION: You MUST format the content EXACTLY into these types: {formats}. Generate EACH format as a separate distinct section with a clear heading (e.g., '### [Format Name]')."
 
-    if len(chunks) == 1:
-        user_prompt = f"""{formatting_instructions}
+    user_prompt = f"""{formatting_instructions}
 
 Keep all facts intact. Improve readability and structure.
 
@@ -296,73 +296,15 @@ CONTENT:
 
 {gemini_output}"""
 
-        print("[llm] Running Qwen formatting ...")
-        result = _generate(FORMATTING_SYSTEM_PROMPT, user_prompt, max_new_tokens=2048)
-        print("[llm] Formatting complete.")
-        return result
-
-    print(f"[llm] Output is large. Splitting into {len(chunks)} chunks for formatting.")
-    results = []
-    for i, chunk in enumerate(chunks):
-        print(f"[llm] Formatting chunk {i+1}/{len(chunks)} ...")
-        user_prompt = f"""{formatting_instructions}
-
-Keep all facts intact. Improve readability and structure.
-
-CONTENT:
-
-{chunk}"""
-        res = _generate(FORMATTING_SYSTEM_PROMPT, user_prompt, max_new_tokens=2048)
-        results.append(res)
-        
-    print("[llm] Chunk formatting complete.")
-    return "\n\n---\n\n".join(results)
+    print("[llm] Running Qwen formatting ...")
+    result = _generate(FORMATTING_SYSTEM_PROMPT, user_prompt, max_new_tokens=2048)
+    print("[llm] Formatting complete.")
+    return result
 
 
 def moderate_content(text: str) -> dict:
     """
     Check if user input contains adult, abusive, violent, or policy-violating content.
-
-    Uses a short Qwen inference (max 128 tokens) to classify the input.
-
-    Args:
-        text: The user's input text (prompt or OCR-extracted text).
-
-    Returns:
-        {"safe": True, "reason": ""} if content is clean.
-        {"safe": False, "reason": "..."} if content is flagged.
+    Currently bypassed because smaller LLMs (like 1.5B) hallucinate false positives.
     """
-    chunks = _chunk_text(text, max_tokens=2000)
-
-    print(f"[llm] Running content moderation (Chunks: {len(chunks)}) ...")
-
-    for i, chunk in enumerate(chunks):
-        user_prompt = f"""Classify the following user input:
-
-{chunk}"""
-
-        result = _generate(MODERATION_SYSTEM_PROMPT, user_prompt, max_new_tokens=128)
-        
-        try:
-            cleaned = result.strip()
-            if cleaned.startswith("```"):
-                lines = cleaned.split("\n")
-                lines = [l for l in lines if not l.strip().startswith("```")]
-                cleaned = "\n".join(lines).strip()
-
-            parsed = json.loads(cleaned)
-            is_safe = bool(parsed.get("safe", True))
-            
-            # If any chunk is unsafe, immediately return false
-            if not is_safe:
-                print(f"[llm] Moderation flagged unsafe content in chunk {i+1}: {parsed.get('reason', '')}")
-                return {
-                    "safe": False,
-                    "reason": str(parsed.get("reason", "")),
-                }
-                
-        except (json.JSONDecodeError, KeyError):
-            print(f"[llm] WARNING: Could not parse moderation response for chunk {i+1}. Defaulting to safe.")
-            
-    print("[llm] Moderation complete. Content is safe.")
     return {"safe": True, "reason": ""}

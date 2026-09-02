@@ -1,4 +1,5 @@
 "use client";
+import { BACKEND_URL } from "../../config";
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
@@ -420,19 +421,25 @@ export default function MainPage() {
         if (fullPrompt) formData.append("prompt", fullPrompt);
         if (desiredOutputs.length > 0) formData.append("desired_outputs", JSON.stringify(desiredOutputs));
 
-        let endpoint = "http://localhost:8000/analyze-image";
-        if (fileToSend.type === "video") endpoint = "http://localhost:8000/analyze-video";
-        if (fileToSend.type === "audio") endpoint = "http://localhost:8000/analyze-audio";
-        if (fileToSend.type === "pdf") endpoint = "http://localhost:8000/analyze-pdf";
+        let endpoint = `${BACKEND_URL}/analyze-image`;
+        if (fileToSend.type === "video") endpoint = `${BACKEND_URL}/analyze-video`;
+        if (fileToSend.type === "audio") endpoint = `${BACKEND_URL}/analyze-audio`;
+        if (fileToSend.type === "pdf") endpoint = `${BACKEND_URL}/analyze-pdf`;
 
         res = await fetch(endpoint, {
           method: "POST",
+          headers: {
+            "Bypass-Tunnel-Reminder": "true" 
+          },
           body: formData,
         });
       } else {
-        res = await fetch("http://localhost:8000/process-prompt", {
+        res = await fetch(`${BACKEND_URL}/process-prompt`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Bypass-Tunnel-Reminder": "true" 
+          },
           body: JSON.stringify({ prompt: fullPrompt, desired_outputs: desiredOutputs.length > 0 ? desiredOutputs : undefined }),
         });
       }
