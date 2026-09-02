@@ -8,21 +8,21 @@ import Navbar from "./navbar";
 export default function ClientLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // Manage Initial App Load (6 seconds)
   useEffect(() => {
     const hasInitialLoaded = typeof window !== "undefined" ? sessionStorage.getItem("hasInitialLoaded") : null;
-    
+
     if (!hasInitialLoaded) {
       const timer = setTimeout(() => {
         setIsLoading(false);
         if (typeof window !== "undefined") {
           sessionStorage.setItem("hasInitialLoaded", "true");
         }
-      }, 6500);
+      }, 1500);
       return () => clearTimeout(timer);
     } else {
       const timer = setTimeout(() => {
@@ -36,15 +36,15 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
   // Manage Page Transitions / Route Changes (1.5 seconds)
   useEffect(() => {
     if (isInitialLoad) return;
-    
+
     const startTimer = setTimeout(() => {
       setIsLoading(true);
     }, 0);
-    
+
     const endTimer = setTimeout(() => {
       setIsLoading(false);
     }, 1500);
-    
+
     return () => {
       clearTimeout(startTimer);
       clearTimeout(endTimer);
