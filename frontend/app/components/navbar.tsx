@@ -35,6 +35,7 @@ export default function Navbar() {
 
   // Close mobile menu on route change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMobileMenuOpen(false);
   }, [pathname]);
 
@@ -79,7 +80,7 @@ export default function Navbar() {
               <Zap className="w-4 h-4 text-black font-black" />
             </div>
             <span className="font-bold tracking-[0.18em] bg-gradient-to-r from-white via-neutral-200 to-neutral-400 bg-clip-text text-transparent">
-              GEN AI SOCIAL
+              BOUYANT AI
             </span>
           </Link>
 
@@ -184,7 +185,7 @@ export default function Navbar() {
               </div>
               <h3 className="text-xl font-bold tracking-wide">Welcome Back</h3>
               <p className="text-xs text-neutral-400 mt-1">
-                Sign in to your Gen AI Social account
+                Sign in to your BOUYANT AI account
               </p>
             </div>
 

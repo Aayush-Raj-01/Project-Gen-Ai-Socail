@@ -2,6 +2,6 @@
 // GLOBALS & CONFIGURATION
 // ==========================================
 
-// Change this link whenever you start a new backend tunnel!
-// If you are testing locally on your own PC, you can leave it as "http://localhost:8000"
-export const BACKEND_URL = "http://localhost:8000";
+// Built-in Next.js reverse proxy: Automatically routes /api/backend/* directly
+// to http://127.0.0.1:8000 without CORS issues or needing an external Pinggy tunnel!
+export const BACKEND_URL = "/api/backend";

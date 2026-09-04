@@ -50,18 +50,20 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — allow all origins for development
+# CORS — allow all origins for development and tunnels
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "https://0239-122-185-51-250.ngrok-free.app",
-        "https://wksri-122-185-51-250.run.pinggy-free.link"
-    ],
+    allow_origin_regex=r".*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+SSE_HEADERS = {
+    "Cache-Control": "no-cache, no-transform",
+    "Connection": "keep-alive",
+    "X-Accel-Buffering": "no",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -110,6 +112,7 @@ async def analyze_uploaded_image(
         
         def event_generator():
             try:
+                yield f": {' ' * 1024}\n\n"  # Flush proxy/tunnel buffers immediately
                 for event in process_image(file_paths, prompt=prompt, desired_outputs=outputs_list):
                     yield event
             except ContentViolationError as e:
@@ -117,7 +120,7 @@ async def analyze_uploaded_image(
             except Exception as e:
                 yield f'data: {{"error": {{"type": "server_error", "reason": "{str(e)}"}}}}\n\n'
                 
-        return StreamingResponse(event_generator(), media_type="text/event-stream")
+        return StreamingResponse(event_generator(), media_type="text/event-stream", headers=SSE_HEADERS)
 
     except Exception as e:
         print(f"[app] ERROR: {e}")
@@ -183,6 +186,7 @@ async def analyze_uploaded_video(
         
         def event_generator():
             try:
+                yield f": {' ' * 1024}\n\n"  # Flush proxy/tunnel buffers immediately
                 for event in process_video(file_paths, prompt=prompt, desired_outputs=outputs_list):
                     yield event
             except ContentViolationError as e:
@@ -190,7 +194,7 @@ async def analyze_uploaded_video(
             except Exception as e:
                 yield f'data: {{"error": {{"type": "server_error", "reason": "{str(e)}"}}}}\n\n'
                 
-        return StreamingResponse(event_generator(), media_type="text/event-stream")
+        return StreamingResponse(event_generator(), media_type="text/event-stream", headers=SSE_HEADERS)
 
     except Exception as e:
         print(f"[app] ERROR: {e}")
@@ -224,6 +228,7 @@ async def analyze_uploaded_audio(
         
         def event_generator():
             try:
+                yield f": {' ' * 1024}\n\n"  # Flush proxy/tunnel buffers immediately
                 for event in process_audio(file_paths, prompt=prompt, desired_outputs=outputs_list):
                     yield event
             except ContentViolationError as e:
@@ -231,7 +236,7 @@ async def analyze_uploaded_audio(
             except Exception as e:
                 yield f'data: {{"error": {{"type": "server_error", "reason": "{str(e)}"}}}}\n\n'
                 
-        return StreamingResponse(event_generator(), media_type="text/event-stream")
+        return StreamingResponse(event_generator(), media_type="text/event-stream", headers=SSE_HEADERS)
 
     except Exception as e:
         print(f"[app] ERROR: {e}")
@@ -265,6 +270,7 @@ async def analyze_uploaded_pdf(
         
         def event_generator():
             try:
+                yield f": {' ' * 1024}\n\n"  # Flush proxy/tunnel buffers immediately
                 for event in process_pdf(file_paths, prompt=prompt, desired_outputs=outputs_list):
                     yield event
             except ContentViolationError as e:
@@ -272,7 +278,7 @@ async def analyze_uploaded_pdf(
             except Exception as e:
                 yield f'data: {{"error": {{"type": "server_error", "reason": "{str(e)}"}}}}\n\n'
                 
-        return StreamingResponse(event_generator(), media_type="text/event-stream")
+        return StreamingResponse(event_generator(), media_type="text/event-stream", headers=SSE_HEADERS)
 
     except Exception as e:
         print(f"[app] ERROR: {e}")

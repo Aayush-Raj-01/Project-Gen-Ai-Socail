@@ -113,7 +113,7 @@ class Particle3D {
     this.vx = (Math.random() - 0.5) * 0.4;
     this.vy = (Math.random() - 0.5) * 0.4;
     this.vz = (Math.random() - 0.5) * 0.4;
-    this.baseColor = Math.random() > 0.4 ? "0, 242, 254" : "176, 87, 254";
+    this.baseColor = Math.random() > 0.5 ? "255, 255, 255" : "150, 150, 150";
   }
 
   update(width: number, height: number): void {
@@ -276,41 +276,87 @@ export const PlexusHero: React.FC = () => {
 };
 
 const DynamicLoadingText = ({ status }: { status: string }) => {
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState(10);
+  const [displayStatus, setDisplayStatus] = useState<string>(status || "Connecting to pipeline...");
 
+  // Respond immediately when the server sends a real SSE pipeline event
   useEffect(() => {
-    // Map status string to rough progress %
-    let newProgress = progress;
-    if (status.includes("Analyzing") || status.includes("Transcribing") || status.includes("Extracting")) {
-      newProgress = 25;
-    } else if (status.includes("Compressing")) {
-      newProgress = 50;
-    } else if (status.includes("Generating")) {
-      newProgress = 75;
-    } else if (status.includes("Formatting")) {
-      newProgress = 95;
+    if (status && status !== "Connecting to server..." && status !== "Initializing...") {
+      setDisplayStatus(status);
+      if (status.includes("Analyzing") || status.includes("Transcribing") || status.includes("Extracting")) {
+        setProgress((prev) => Math.max(prev, 30));
+      } else if (status.includes("Compressing")) {
+        setProgress((prev) => Math.max(prev, 55));
+      } else if (status.includes("Generating")) {
+        setProgress((prev) => Math.max(prev, 78));
+      } else if (status.includes("Formatting")) {
+        setProgress((prev) => Math.max(prev, 94));
+      }
     }
+  }, [status]);
 
-    setProgress(newProgress);
+  // Smooth progressive animation & stage transitions so the animation never gets stuck
+  useEffect(() => {
+    const startTime = Date.now();
+    const interval = setInterval(() => {
+      const elapsedSec = (Date.now() - startTime) / 1000;
+
+      // Cycle informative pipeline stages if server status hasn't sent custom SSE updates
+      setDisplayStatus((current) => {
+        if (
+          !status ||
+          status === "Connecting to server..." ||
+          status === "Initializing..." ||
+          status === "Generating response..." ||
+          current.startsWith("Connecting") ||
+          current.startsWith("Analyzing input context") ||
+          current.startsWith("Compressing knowledge") ||
+          current.startsWith("Synthesizing") ||
+          current.startsWith("Beautifying")
+        ) {
+          if (elapsedSec > 1.8 && elapsedSec <= 6) {
+            return "Analyzing input context & extracting multimodal tokens...";
+          } else if (elapsedSec > 6 && elapsedSec <= 13) {
+            return "Compressing knowledge & running safety checks...";
+          } else if (elapsedSec > 13 && elapsedSec <= 21) {
+            return "Synthesizing tailored intelligence via AI...";
+          } else if (elapsedSec > 21) {
+            return "Beautifying and formatting final artifacts...";
+          }
+        }
+        return current;
+      });
+
+      // Smoothly advance progress towards 95%
+      setProgress((prev) => {
+        if (prev < 35) return prev + 1.2;
+        if (prev < 65) return prev + 0.7;
+        if (prev < 88) return prev + 0.35;
+        if (prev < 95) return prev + 0.1;
+        return prev;
+      });
+    }, 200);
+
+    return () => clearInterval(interval);
   }, [status]);
 
   return (
-    <div style={{ width: "100%", maxWidth: "320px", textAlign: "center" }}>
+    <div style={{ width: "100%", maxWidth: "340px", textAlign: "center" }}>
       <motion.h2
-        key={status}
+        key={displayStatus}
         initial={{ opacity: 0, y: 5 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -5 }}
         transition={{ duration: 0.3 }}
       >
-        {status}
+        {displayStatus}
       </motion.h2>
       
       <div className="mp-progress-track">
         <motion.div 
           className="mp-progress-fill" 
           animate={{ width: `${progress}%` }} 
-          transition={{ ease: "easeInOut", duration: 3.5 }}
+          transition={{ ease: "easeOut", duration: 0.3 }}
         />
       </div>
       <p style={{ marginTop: "12px", fontSize: "13px", color: "#A1A1AA" }}>
@@ -485,7 +531,8 @@ export default function MainPage() {
         const res = await fetch(endpoint, {
           method: "POST",
           headers: {
-            "Bypass-Tunnel-Reminder": "true" 
+            "Bypass-Tunnel-Reminder": "true",
+            "X-Pinggy-No-Screen": "1"
           },
           body: formData,
         });
@@ -544,7 +591,8 @@ export default function MainPage() {
           method: "POST",
           headers: { 
             "Content-Type": "application/json",
-            "Bypass-Tunnel-Reminder": "true" 
+            "Bypass-Tunnel-Reminder": "true",
+            "X-Pinggy-No-Screen": "1"
           },
           body: JSON.stringify({ prompt: fullPrompt, desired_outputs: desiredOutputs.length > 0 ? desiredOutputs : undefined }),
         });
@@ -804,8 +852,6 @@ export default function MainPage() {
       {/* ── Sleek Minimal Grid Background ── */}
       <div className="mp-grid-background" aria-hidden="true" />
 
-      {/* ── Navbar ── */}
-      <Navbar />
 
       {/* ── Main Content ── */}
       <main className="mp-content">
@@ -1182,7 +1228,7 @@ export default function MainPage() {
             <motion.button
               className="mp-submit-btn"
               disabled={isLoading || (attachedFiles.length === 0 && prompt.trim().length === 0) || !selections.outputType || (Array.isArray(selections.outputType) ? selections.outputType.length === 0 : false)}
-              title={(!selections.outputType || (Array.isArray(selections.outputType) ? selections.outputType.length === 0 : false)) ? "Please select an Output Type" : "Generate with GenAI"}
+              title={(!selections.outputType || (Array.isArray(selections.outputType) ? selections.outputType.length === 0 : false)) ? "Please select an Output Type" : "Generate with BOUYANT AI"}
               onClick={handleSubmit}
               onMouseEnter={() => setGenerateHovered(true)}
               onMouseLeave={() => setGenerateHovered(false)}

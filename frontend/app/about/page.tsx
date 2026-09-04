@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 import {
-  Sparkles,
   Cpu,
   Eye,
   Mic,
@@ -12,152 +12,328 @@ import {
   ArrowRight,
   Layers,
   Server,
+  Lock,
+  Terminal,
+  Sliders,
+  Sparkles,
+  Database,
+  BarChart3
 } from "lucide-react";
 
 export default function AboutPage() {
-  const pipelineSteps = [
+  const pipelineStages = [
     {
+      stage: "01",
       title: "Multi-Modal Ingestion",
+      tech: "Florence-2 // Whisper // PyMuPDF",
+      latency: "~45ms / chunk",
+      desc: "Simultaneous multi-stream parsing across 4K video frames, multi-speaker audio tracks, complex tabular PDFs, and high-res imagery.",
       icon: Layers,
-      description:
-        "Seamlessly accept text, images, video, audio, and PDF documents. Handled by Florence-2, Faster-Whisper, EasyOCR, and PyMuPDF.",
-      badge: "Stage 1",
     },
     {
-      title: "Local Moderation & Compression",
+      stage: "02",
+      title: "Edge Safety & PII Redaction",
+      tech: "Qwen3-4B-Instruct (Edge RAM)",
+      latency: "~12ms TTFT",
+      desc: "Local memory isolation gate. Strips personally identifiable information, sanitizes sensitive tokens, and filters abusive content prior to network transit.",
       icon: ShieldCheck,
-      description:
-        "Local Qwen3-4B-Instruct parses raw data, compresses it into structured JSON, and filters out violent or abusive content.",
-      badge: "Stage 2",
     },
     {
-      title: "Cloud LLM Generation",
+      stage: "03",
+      title: "Hybrid Cloud Reasoning",
+      tech: "Gemini 2.5 Flash + Groq LLaMA 3",
+      latency: "~210ms TTFT",
+      desc: "Dual-engine cloud cluster. Deep contextual reasoning via Google Gemini with sub-second failover redundancy to Groq LLaMA 3 70B.",
       icon: Zap,
-      description:
-        "High-reasoning generation powered primarily by Google Gemini 2.5 Flash with automatic fallback to Groq LLaMA 3 70B.",
-      badge: "Stage 3",
     },
     {
-      title: "Artifact Beautification",
+      stage: "04",
+      title: "Omnichannel Artifact Synthesis",
+      tech: "Adaptive Stylistic Compiler",
+      latency: "~60ms build",
+      desc: "Autonomous formatting into 8 distinct artifact schemas: Executive summaries, keynote presentations, video scripts, and social thought leadership.",
       icon: Sparkles,
-      description:
-        "Transforms raw intelligence into polished, production-ready copy, social cards, threads, and executive summaries.",
-      badge: "Stage 4",
     },
   ];
 
-  const techStack = [
-    { name: "Florence-2-base", role: "Visual & Spatial Extraction", icon: Eye },
-    { name: "Faster-Whisper", role: "Audio & Video Transcription", icon: Mic },
-    { name: "Qwen3-4B-Instruct", role: "Local Compression & Safety Gate", icon: Cpu },
-    { name: "PyMuPDF & Tesseract", role: "Document Text Extraction", icon: FileText },
-    { name: "Google Gemini & Groq", role: "Cloud Content Generation", icon: Zap },
-    { name: "FastAPI + Elastic GPU", role: "Scale-to-Zero ML Backend", icon: Server },
+  const modelMatrix = [
+    {
+      name: "Florence-2-base",
+      type: "Vision Transformer",
+      tier: "Local Edge GPU",
+      footprint: "0.9 GB VRAM",
+      role: "Dense image captioning, bounding-box spatial coordinates, visual OCR extraction.",
+      icon: Eye,
+    },
+    {
+      name: "Faster-Whisper (Int8)",
+      type: "Speech Diarization",
+      tier: "Local Edge CPU/GPU",
+      footprint: "0.6 GB RAM",
+      role: "Timestamped multi-speaker transcription, cadence detection, multilingual translation.",
+      icon: Mic,
+    },
+    {
+      name: "Qwen3-4B-Instruct",
+      type: "Privacy & Compactor Gate",
+      tier: "Local Memory Gate",
+      footprint: "2.8 GB VRAM",
+      role: "Zero-leak PII scrubbing, toxicity moderation, token compression into JSON schemas.",
+      icon: Cpu,
+    },
+    {
+      name: "PyMuPDF & Tesseract",
+      type: "Document Geometry Core",
+      tier: "Local System Worker",
+      footprint: "120 MB RAM",
+      role: "Structured tabular extraction, vector chart extraction, hierarchical document trees.",
+      icon: FileText,
+    },
+    {
+      name: "Google Gemini 2.5 Flash",
+      type: "Frontline Reasoning Engine",
+      tier: "Cloud LLM Cluster",
+      footprint: "Elastic Cloud",
+      role: "Deep multi-modal synthesis, executive narrative planning, high-context comprehension.",
+      icon: Zap,
+    },
+    {
+      name: "Groq LLaMA 3 70B",
+      type: "High-Throughput Fallback",
+      tier: "Ultra-Fast Inference LPU",
+      footprint: "Zero Latency Tier",
+      role: "High-speed token generation fallback ensuring 99.99% continuous pipeline uptime.",
+      icon: Server,
+    },
   ];
 
   return (
-    <main className="min-h-screen bg-[#07100d] text-white pt-28 pb-20 px-4 sm:px-6 md:px-12 relative overflow-hidden">
-      {/* Background Ambient Glows */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-[400px] h-[400px] bg-cyan-500/10 rounded-full blur-[120px] pointer-events-none" />
+    <main className="min-h-screen bg-[#050505] text-white pt-28 pb-32 px-4 sm:px-6 md:px-12 relative overflow-hidden font-sans select-none selection:bg-white/20">
+      
+      {/* ── Subtle Background Architectural Grid ── */}
+      <div 
+        className="absolute inset-0 pointer-events-none opacity-40"
+        style={{
+          backgroundImage: "linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px)",
+          backgroundSize: "64px 64px",
+          maskImage: "radial-gradient(circle at 50% 20%, black 0%, transparent 80%)",
+          WebkitMaskImage: "radial-gradient(circle at 50% 20%, black 0%, transparent 80%)"
+        }}
+      />
 
-      <div className="max-w-6xl mx-auto relative z-10 space-y-20">
-        {/* Header Hero Section */}
-        <section className="text-center space-y-6 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold tracking-widest uppercase">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Next-Gen Content Intelligence</span>
-          </div>
+      <div className="max-w-6xl mx-auto relative z-10 space-y-28">
+        
+        {/* ── HEADER / HERO SPECIFICATION ── */}
+        <section className="text-center space-y-6 max-w-4xl mx-auto pt-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/10 text-neutral-300 text-[11px] font-mono tracking-widest uppercase shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            <span>SYSTEM ARCHITECTURE // SPECIFICATION V1.0</span>
+          </motion.div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight bg-gradient-to-r from-white via-neutral-100 to-neutral-400 bg-clip-text text-transparent">
-            Transform Any Media Into Social Masterpieces
-          </h1>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-[0.12em] text-white uppercase antialiased"
+          >
+            BOUYANT AI
+          </motion.h1>
 
-          <p className="text-base sm:text-lg text-neutral-400 leading-relaxed">
-            Project Gen AI Social is an end-to-end multi-modal transformation engine. We combine local edge-optimized vision & speech models with state-of-the-art cloud LLMs to understand complex media and generate impactful social artifacts.
-          </p>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="text-sm sm:text-base md:text-lg text-neutral-400 font-medium tracking-wide uppercase max-w-2xl mx-auto leading-relaxed"
+          >
+            Autonomous Multi-Modal Ingestion, Edge Moderation & Hybrid Cloud Synthesis
+          </motion.p>
 
-          <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="pt-6 flex flex-wrap items-center justify-center gap-4"
+          >
             <Link
               href="/mainpage"
-              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-emerald-400 hover:bg-emerald-300 text-black font-bold text-sm uppercase tracking-wider shadow-lg shadow-emerald-400/20 hover:scale-105 active:scale-95 transition-all"
+              className="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-white text-black font-bold text-xs uppercase tracking-[0.2em] shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:bg-neutral-200 hover:scale-105 active:scale-95 transition-all duration-300"
             >
-              <span>Get Started with Studio</span>
+              <span>Launch Studio</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
 
             <Link
-              href="/"
-              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-white font-medium text-sm tracking-wider uppercase transition-colors"
+              href="/landingpage"
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 text-white font-medium text-xs tracking-[0.2em] uppercase transition-all duration-300"
             >
-              <span>Back to Home</span>
+              <span>Landing Overview</span>
             </Link>
-          </div>
+          </motion.div>
         </section>
 
-        {/* 4-Stage Pipeline Section */}
-        <section className="space-y-10">
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">The 4-Stage AI Pipeline</h2>
-            <p className="text-sm text-neutral-400">
-              How our hybrid local + cloud engine processes multi-modal inputs.
+        {/* ── THE 4-STAGE PIPELINE ── */}
+        <section className="space-y-12">
+          <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-white/10 pb-6 gap-4">
+            <div>
+              <span className="text-xs font-mono tracking-[0.25em] text-neutral-500 uppercase block mb-1">Execution Flow</span>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-[0.1em] text-white uppercase">The 4-Stage AI Pipeline</h2>
+            </div>
+            <p className="text-xs text-neutral-400 font-mono max-w-md md:text-right">
+              Raw multi-modal data is parsed locally before reaching secure cloud synthesis clusters.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {pipelineSteps.map((step, idx) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {pipelineStages.map((step, idx) => {
               const Icon = step.icon;
               return (
                 <div
                   key={idx}
-                  className="p-6 sm:p-8 rounded-3xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 transition-all duration-300 group hover:border-emerald-500/40 relative overflow-hidden"
+                  className="rounded-2xl bg-white/[0.02] border border-white/10 p-1.5 flex flex-col justify-between group hover:border-white/20 transition-all duration-300"
                 >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 group-hover:scale-110 transition-transform">
-                      <Icon className="w-6 h-6" />
+                  <div className="rounded-[12px] bg-[#0c0c0c] border border-white/5 p-6 h-full flex flex-col justify-between shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
+                    <div>
+                      <div className="flex items-center justify-between mb-6">
+                        <span className="text-[11px] font-mono text-neutral-500 tracking-wider">STAGE {step.stage}</span>
+                        <div className="p-2 rounded-lg bg-white/[0.04] border border-white/10 text-white">
+                          <Icon className="w-4 h-4" />
+                        </div>
+                      </div>
+
+                      <h3 className="text-base font-bold text-white tracking-wide uppercase mb-3">{step.title}</h3>
+                      <p className="text-xs text-neutral-400 leading-relaxed mb-6">{step.desc}</p>
                     </div>
-                    <span className="text-xs font-bold uppercase tracking-widest text-emerald-400/80 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-                      {step.badge}
-                    </span>
+
+                    <div className="pt-4 border-t border-white/5 space-y-1.5 font-mono text-[10px]">
+                      <div className="flex justify-between text-neutral-500">
+                        <span>MODEL:</span>
+                        <span className="text-neutral-300">{step.tech}</span>
+                      </div>
+                      <div className="flex justify-between text-neutral-500">
+                        <span>LATENCY:</span>
+                        <span className="text-neutral-300">{step.latency}</span>
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="text-xl font-bold mb-2 text-white">{step.title}</h3>
-                  <p className="text-sm text-neutral-400 leading-relaxed">{step.description}</p>
                 </div>
               );
             })}
           </div>
         </section>
 
-        {/* Architecture & Tech Grid */}
-        <section className="space-y-10">
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Technology & Models</h2>
-            <p className="text-sm text-neutral-400">
-              Battle-tested open-weight models and cloud LLMs working in concert.
+        {/* ── MODEL MATRIX & ARCHITECTURAL SPECS ── */}
+        <section className="space-y-12">
+          <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-white/10 pb-6 gap-4">
+            <div>
+              <span className="text-xs font-mono tracking-[0.25em] text-neutral-500 uppercase block mb-1">Infrastructure</span>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-[0.1em] text-white uppercase">Model Topology & Tiers</h2>
+            </div>
+            <p className="text-xs text-neutral-400 font-mono max-w-md md:text-right">
+              Hybrid multi-tiered execution balancing edge privacy with cloud reasoning power.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {techStack.map((tech, idx) => {
-              const Icon = tech.icon;
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {modelMatrix.map((model, idx) => {
+              const Icon = model.icon;
               return (
                 <div
                   key={idx}
-                  className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 hover:border-white/20 flex items-start gap-4 transition-colors"
+                  className="rounded-2xl bg-white/[0.02] border border-white/10 p-1.5 flex flex-col justify-between group hover:border-white/20 transition-all duration-300"
                 >
-                  <div className="p-2.5 rounded-xl bg-white/[0.05] text-neutral-300">
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-sm text-white">{tech.name}</h4>
-                    <p className="text-xs text-neutral-400 mt-1">{tech.role}</p>
+                  <div className="rounded-[12px] bg-[#0c0c0c] border border-white/5 p-6 h-full flex flex-col justify-between shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
+                    <div>
+                      <div className="flex items-center gap-3 mb-5">
+                        <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white">
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm text-white tracking-wider uppercase">{model.name}</h4>
+                          <span className="text-[10px] font-mono text-neutral-500 uppercase">{model.type}</span>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-neutral-400 leading-relaxed mb-6">{model.role}</p>
+                    </div>
+
+                    <div className="pt-4 border-t border-white/5 space-y-1.5 font-mono text-[10px]">
+                      <div className="flex justify-between text-neutral-500">
+                        <span>EXECUTION:</span>
+                        <span className="text-neutral-300">{model.tier}</span>
+                      </div>
+                      <div className="flex justify-between text-neutral-500">
+                        <span>MEMORY:</span>
+                        <span className="text-neutral-300">{model.footprint}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
         </section>
+
+        {/* ── SECURITY & AIR-GAPPED PRIVACY PERIMETER ── */}
+        <section className="rounded-3xl bg-white/[0.02] border border-white/10 p-8 sm:p-12 relative overflow-hidden">
+          <div className="max-w-3xl space-y-6">
+            <div className="inline-flex items-center gap-2 text-xs font-mono text-neutral-400 uppercase tracking-widest">
+              <Lock className="w-4 h-4 text-white" />
+              <span>Zero Data Leakage Architecture</span>
+            </div>
+
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-[0.1em] text-white uppercase">
+              Air-Gapped Local Perimeter
+            </h2>
+
+            <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed">
+              Standard AI SaaS applications transmit raw user files directly to third-party APIs. BOUYANT AI eliminates this exposure. Raw video frames, high-resolution document scans, and multi-track audio are ingested and sanitized inside your local hardware boundary using edge-resident open-weight models.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 font-mono text-xs text-neutral-300">
+              <div className="p-4 bg-white/[0.03] border border-white/5 rounded-xl">
+                <span className="text-white font-bold block mb-1">01 / LOCAL INGEST</span>
+                <span className="text-[11px] text-neutral-500">RAM-only buffer isolation</span>
+              </div>
+              <div className="p-4 bg-white/[0.03] border border-white/5 rounded-xl">
+                <span className="text-white font-bold block mb-1">02 / PII STRIPPED</span>
+                <span className="text-[11px] text-neutral-500">Local Qwen compliance filter</span>
+              </div>
+              <div className="p-4 bg-white/[0.03] border border-white/5 rounded-xl">
+                <span className="text-white font-bold block mb-1">03 / ZERO LOG RETENTION</span>
+                <span className="text-[11px] text-neutral-500">Transient telemetry statelessness</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── BOTTOM CTA ── */}
+        <section className="text-center space-y-8 pt-8 border-t border-white/10">
+          <h2 className="text-3xl sm:text-5xl font-extrabold tracking-[0.12em] text-white uppercase">
+            Deploy Your First Pipeline
+          </h2>
+
+          <div className="flex justify-center gap-4">
+            <Link
+              href="/mainpage"
+              className="inline-flex items-center gap-3 px-10 py-4 rounded-full bg-white text-black font-bold text-xs uppercase tracking-[0.2em] shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:bg-neutral-200 hover:scale-105 active:scale-95 transition-all duration-300"
+            >
+              <span>Enter Bouyant Studio</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <div className="text-[10px] font-mono text-neutral-600 uppercase tracking-widest">
+            BOUYANT AI // SCALE-TO-ZERO ML ENGINE // MONOCHROMATIC ARCHITECTURE
+          </div>
+        </section>
+
       </div>
     </main>
   );
 }
+

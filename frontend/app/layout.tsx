@@ -27,7 +27,7 @@ import { Suspense } from "react";
 import ClientLayoutWrapper from "./components/client-wrapper";
 
 export const metadata: Metadata = {
-  title: "GenAI Social Studio",
+  title: "BOUYANT AI",
   description: "Multimodal AI-powered social content transformation platform",
 };
 
